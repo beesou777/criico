@@ -10,7 +10,12 @@ import {
   type PlayerListQuery,
   type Paginated,
 } from './pagination';
-import { calculateImpactScore, type ScoreBreakdown } from './score';
+import {
+  calculateImpactScore,
+  getExperienceStatus,
+  type ExperienceStatus,
+  type ScoreBreakdown,
+} from './score';
 import {
   canonicalMatch,
   type PlayerInput,
@@ -55,6 +60,7 @@ export interface TeamRecord {
 
 export interface RankedPlayerRecord extends PlayerRecord {
   score: ScoreBreakdown;
+  experienceStatus: ExperienceStatus;
 }
 
 export interface MatchRecord {
@@ -476,24 +482,52 @@ export async function getLeaderboard(
 ): Promise<Paginated<RankedPlayerRecord>> {
   const input = playerListQuerySchema.parse(options);
   const filters = playerFilters(ownerId, input);
-  // Rank the entire filtered roster before LIMIT/OFFSET, never just one page.
-  const result = await paginatedRows(
-    `SELECT ${playerColumns}, (
-    "totalRuns"::bigint * CASE WHEN role = 'Batsman' THEN 156 ELSE 120 END +
-    "totalWickets"::bigint * CASE WHEN role = 'Bowler' THEN 3000 ELSE 2000 END +
-    CASE WHEN "matchesPlayed" < 5 THEN -5000 WHEN "matchesPlayed" > 20 THEN 10000 ELSE 0 END +
-    CASE WHEN role = 'Wicketkeeper' THEN 3000 ELSE 0 END
-  ) AS "scoreHundredths" FROM players WHERE ${filters.where}`,
-    playerOrder(input, true),
+  // Calculate and rank the full owner-scoped roster in TypeScript so the
+  // scoring function remains the only source of Impact Score rules.
+  const result = await query<Record<string, unknown>>(
+    `SELECT ${playerColumns} FROM players WHERE ${filters.where}`,
     filters.params,
-    input,
   );
-  return {
-    data: result.rows.map((row) => {
+  const ranked = result.rows
+    .map((row) => {
       const player = formatPlayerRow(row);
-      return { ...player, score: calculateImpactScore(player) };
-    }),
-    meta: result.meta,
+      return {
+        ...player,
+        score: calculateImpactScore(player),
+        experienceStatus: getExperienceStatus(player.matchesPlayed),
+      };
+    })
+    .sort((a, b) => {
+      const sort = input.sort ?? 'impact';
+      const direction = input.sort && input.direction === 'asc' ? 1 : -1;
+      const compareText = (left: string, right: string) =>
+        left < right ? -1 : left > right ? 1 : 0;
+      const comparison =
+        sort === 'impact'
+          ? Math.round(a.score.total * 100) - Math.round(b.score.total * 100)
+          : sort === 'name'
+            ? compareText(a.name.toLowerCase(), b.name.toLowerCase())
+            : sort === 'team'
+              ? compareText(a.teamName.toLowerCase(), b.teamName.toLowerCase())
+              : sort === 'matches'
+                ? a.matchesPlayed - b.matchesPlayed
+                : sort === 'runs'
+                  ? a.totalRuns - b.totalRuns
+                  : sort === 'wickets'
+                    ? a.totalWickets - b.totalWickets
+                    : a.basePrice - b.basePrice;
+      if (comparison) return comparison * direction;
+      const nameComparison = compareText(
+        a.name.toLowerCase(),
+        b.name.toLowerCase(),
+      );
+      return nameComparison || compareText(a.id, b.id);
+    });
+  const meta = paginationMeta(ranked.length, input);
+  const start = (meta.page - 1) * meta.limit;
+  return {
+    data: ranked.slice(start, start + meta.limit),
+    meta,
   };
 }
 

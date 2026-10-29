@@ -1,7 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import { calculateImpactScore } from '../src/lib/score';
+import { calculateImpactScore, getExperienceStatus } from '../src/lib/score';
 
 describe('Custom Impact Score Formula', () => {
+  it.each([
+    ['Batsman', 3.6, 55.6, 0],
+    ['Bowler', 20, 72, 0],
+    ['All-rounder', 0, 52, 0],
+    ['Wicketkeeper', 0, 82, 30],
+  ] as const)(
+    'breaks down the %s score into contributions that sum to its total',
+    (role, roleBonus, total, keeper) => {
+      const score = calculateImpactScore({
+        role,
+        matchesPlayed: 5,
+        totalRuns: 10,
+        totalWickets: 2,
+      });
+      expect(score).toEqual({
+        total,
+        runs: 12,
+        wickets: 40,
+        roleBonus,
+        experience: 0,
+        keeper,
+      });
+      expect(
+        score.runs +
+          score.wickets +
+          score.roleBonus +
+          score.experience +
+          score.keeper,
+      ).toBe(score.total);
+    },
+  );
+
   it('applies bowler weighting (wickets * 1.5 * 20) and a rookie penalty (-50) even at zero matches', () => {
     // Bowler with 0 matches, 0 runs, 2 wickets:
     // runs = 0
@@ -18,7 +50,8 @@ describe('Custom Impact Score Formula', () => {
     ).toEqual({
       total: 10,
       runs: 0,
-      wickets: 60,
+      wickets: 40,
+      roleBonus: 20,
       experience: -50,
       keeper: 0,
     });
@@ -53,6 +86,7 @@ describe('Custom Impact Score Formula', () => {
       total: 1430,
       runs: 1200,
       wickets: 200,
+      roleBonus: 0,
       experience: 0,
       keeper: 30,
     });
@@ -91,6 +125,21 @@ describe('Custom Impact Score Formula', () => {
         totalWickets: 2,
       }).total,
     ).toBe(297.56);
+    expect(
+      calculateImpactScore({
+        role: 'Batsman',
+        matchesPlayed: 21,
+        totalRuns: 101,
+        totalWickets: 2,
+      }),
+    ).toEqual({
+      total: 297.56,
+      runs: 121.2,
+      wickets: 40,
+      roleBonus: 36.36,
+      experience: 100,
+      keeper: 0,
+    });
   });
 
   it('rejects negative statistics and invalid roles via validation', () => {
@@ -110,5 +159,15 @@ describe('Custom Impact Score Formula', () => {
         ),
       ),
     ).toThrow();
+  });
+
+  it.each([
+    [0, 'Rookie'],
+    [4, 'Rookie'],
+    [5, 'Regular'],
+    [20, 'Regular'],
+    [21, 'Veteran'],
+  ] as const)('classifies %i career matches as %s', (matches, status) => {
+    expect(getExperienceStatus(matches)).toBe(status);
   });
 });

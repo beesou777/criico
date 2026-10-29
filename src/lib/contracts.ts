@@ -18,14 +18,19 @@ export const playerSchema = z.object({
   teamName: z.string(),
   updatedAt: z.string(),
 });
+export const experienceStatusSchema = z.enum(['Rookie', 'Regular', 'Veteran']);
 export const scoreSchema = z.object({
   total: z.number(),
   runs: z.number(),
   wickets: z.number(),
+  roleBonus: z.number(),
   experience: z.number(),
   keeper: z.number(),
 });
-export const rankedPlayerSchema = playerSchema.extend({ score: scoreSchema });
+export const rankedPlayerSchema = playerSchema.extend({
+  score: scoreSchema,
+  experienceStatus: experienceStatusSchema,
+});
 export const cricketMatchSchema = z.object({
   id: z.uuid(),
   teamA: z.string(),
@@ -57,6 +62,7 @@ export const teamSchema = z.object({ id: z.uuid(), name: z.string() });
 export type Team = z.infer<typeof teamSchema>;
 export type Player = z.infer<typeof playerSchema>;
 export type RankedPlayer = z.infer<typeof rankedPlayerSchema>;
+export type ExperienceStatus = z.infer<typeof experienceStatusSchema>;
 export type CricketMatch = z.infer<typeof cricketMatchSchema>;
 export const numberFormat = new Intl.NumberFormat('en-NP', {
   maximumFractionDigits: 2,

@@ -27,4 +27,41 @@ describe('Search navigation', () => {
       { scroll: false },
     );
   });
+
+  it('keeps leaderboard filtering and sorting options available', () => {
+    mocks.push.mockClear();
+    render(
+      <PlayerFilters
+        query={{ page: 1, limit: 20, search: '' }}
+        pathname="/dashboard/leaderboard"
+        total={1}
+        teams={[
+          {
+            id: '00000000-0000-4000-8000-000000000001',
+            name: 'Lions',
+          },
+        ]}
+      />,
+    );
+    fireEvent.change(screen.getByRole('combobox', { name: 'Filter by team' }), {
+      target: { value: '00000000-0000-4000-8000-000000000001' },
+    });
+    fireEvent.change(
+      screen.getByRole('combobox', { name: 'Sort players by' }),
+      {
+        target: { value: 'runs' },
+      },
+    );
+    fireEvent.change(screen.getByRole('combobox', { name: 'Sort direction' }), {
+      target: { value: 'asc' },
+    });
+    const form = screen.getByRole('button', { name: 'Apply' }).closest('form');
+    if (!form) throw new Error('Leaderboard filter form missing.');
+    fireEvent.submit(form);
+
+    expect(mocks.push).toHaveBeenCalledWith(
+      '/dashboard/leaderboard?limit=20&page=1&teamId=00000000-0000-4000-8000-000000000001&sort=runs&direction=asc',
+      { scroll: false },
+    );
+  });
 });

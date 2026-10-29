@@ -9,6 +9,7 @@ import {
   getDashboardSummary,
   getTeams,
   getMatchById,
+  getLeaderboard,
 } from '../src/lib/services';
 const mocks = vi.hoisted(() => ({
   query: vi.fn(),
@@ -39,6 +40,122 @@ const input = {
   expectedUpdatedAt: version,
 };
 describe('Transactional service regressions', () => {
+  it('ranks the full owner roster by shared Impact Score before paginating', async () => {
+    mocks.query.mockResolvedValueOnce({
+      rows: [
+        {
+          id: '00000000-0000-4000-8000-000000000003',
+          name: 'Zed Bowler',
+          role: 'Bowler',
+          basePrice: '0',
+          matchesPlayed: 5,
+          totalRuns: 0,
+          totalWickets: 3,
+          teamId: '00000000-0000-4000-8000-000000000013',
+          teamName: 'Lions',
+          updatedAt: version,
+        },
+        {
+          id: '00000000-0000-4000-8000-000000000001',
+          name: 'Batsman',
+          role: 'Batsman',
+          basePrice: '0',
+          matchesPlayed: 21,
+          totalRuns: 100,
+          totalWickets: 0,
+          teamId: '00000000-0000-4000-8000-000000000013',
+          teamName: 'Lions',
+          updatedAt: version,
+        },
+        {
+          id: '00000000-0000-4000-8000-000000000002',
+          name: 'Aaron Bowler',
+          role: 'Bowler',
+          basePrice: '0',
+          matchesPlayed: 5,
+          totalRuns: 0,
+          totalWickets: 3,
+          teamId: '00000000-0000-4000-8000-000000000013',
+          teamName: 'Lions',
+          updatedAt: version,
+        },
+      ],
+    });
+
+    const result = await getLeaderboard(ownerId, {
+      page: 1,
+      limit: 2,
+      search: '',
+    });
+
+    expect(result.data.map((player) => player.name)).toEqual([
+      'Batsman',
+      'Aaron Bowler',
+    ]);
+    expect(result.data[0]?.score.total).toBe(256);
+    expect(result.data[0]?.experienceStatus).toBe('Veteran');
+    expect(result.meta).toMatchObject({
+      page: 1,
+      limit: 2,
+      totalItems: 3,
+      totalPages: 2,
+      hasNextPage: true,
+    });
+    expect(mocks.query).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE "ownerId" = $1'),
+      [ownerId],
+    );
+  });
+
+  it('preserves leaderboard team filters and requested metric sorting', async () => {
+    mocks.query.mockResolvedValueOnce({
+      rows: [
+        {
+          id: '00000000-0000-4000-8000-000000000004',
+          name: 'High scorer',
+          role: 'Batsman',
+          basePrice: '0',
+          matchesPlayed: 8,
+          totalRuns: 200,
+          totalWickets: 0,
+          teamId: '00000000-0000-4000-8000-000000000014',
+          teamName: 'Lions',
+          updatedAt: version,
+        },
+        {
+          id: '00000000-0000-4000-8000-000000000005',
+          name: 'Lower scorer',
+          role: 'Batsman',
+          basePrice: '0',
+          matchesPlayed: 8,
+          totalRuns: 20,
+          totalWickets: 0,
+          teamId: '00000000-0000-4000-8000-000000000014',
+          teamName: 'Lions',
+          updatedAt: version,
+        },
+      ],
+    });
+
+    const result = await getLeaderboard(ownerId, {
+      page: 1,
+      limit: 20,
+      search: '',
+      teamId: '00000000-0000-4000-8000-000000000014',
+      sort: 'runs',
+      direction: 'asc',
+    });
+
+    expect(result.data.map((player) => player.name)).toEqual([
+      'Lower scorer',
+      'High scorer',
+    ]);
+    expect(mocks.query).toHaveBeenCalledWith(
+      expect.stringContaining('"teamId" = $2'),
+      [ownerId, '00000000-0000-4000-8000-000000000014'],
+    );
+  });
+
   it('loads match details and groups saved performances by side', async () => {
     mocks.query
       .mockResolvedValueOnce({

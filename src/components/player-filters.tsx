@@ -12,11 +12,13 @@ export function PlayerFilters({
   pathname,
   total,
   teams = [],
+  showSort = true,
 }: {
   query: PlayerListQuery;
   pathname: string;
   total: number;
   teams?: Team[];
+  showSort?: boolean;
 }) {
   const { pending, navigate } = useListNavigation();
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -34,8 +36,8 @@ export function PlayerFilters({
     if (search) params.set('search', search);
     if (role) params.set('role', role);
     if (teamId) params.set('teamId', teamId);
-    if (sort) params.set('sort', sort);
-    if (sort && direction) params.set('direction', direction);
+    if (showSort && sort) params.set('sort', sort);
+    if (showSort && sort && direction) params.set('direction', direction);
     navigate(`${pathname}?${params.toString()}`);
   }
   return (
@@ -76,30 +78,34 @@ export function PlayerFilters({
           ))}
         </select>
       </label>
-      <label className="filter-field">
-        <span className="sr-only">Sort players by</span>
-        <select name="sort" defaultValue={query.sort ?? ''}>
-          <option value="">Default order</option>
-          <option value="impact">Impact score</option>
-          <option value="name">Player name</option>
-          <option value="team">Team</option>
-          <option value="matches">Matches</option>
-          <option value="runs">Runs</option>
-          <option value="wickets">Wickets</option>
-          <option value="basePrice">Base price</option>
-        </select>
-      </label>
-      <label className="filter-field sort-direction">
-        <span className="sr-only">Sort direction</span>
-        <select
-          name="direction"
-          defaultValue={query.direction ?? 'desc'}
-          aria-label="Sort direction"
-        >
-          <option value="desc">Descending</option>
-          <option value="asc">Ascending</option>
-        </select>
-      </label>
+      {showSort && (
+        <>
+          <label className="filter-field">
+            <span className="sr-only">Sort players by</span>
+            <select name="sort" defaultValue={query.sort ?? ''}>
+              <option value="">Default order</option>
+              <option value="impact">Impact score</option>
+              <option value="name">Player name</option>
+              <option value="team">Team</option>
+              <option value="matches">Matches</option>
+              <option value="runs">Runs</option>
+              <option value="wickets">Wickets</option>
+              <option value="basePrice">Base price</option>
+            </select>
+          </label>
+          <label className="filter-field sort-direction">
+            <span className="sr-only">Sort direction</span>
+            <select
+              name="direction"
+              defaultValue={query.direction ?? 'desc'}
+              aria-label="Sort direction"
+            >
+              <option value="desc">Descending</option>
+              <option value="asc">Ascending</option>
+            </select>
+          </label>
+        </>
+      )}
       <button
         className="button button-outline filter-submit"
         type="submit"
@@ -110,8 +116,7 @@ export function PlayerFilters({
       {(query.search ||
         query.role ||
         query.teamId ||
-        query.sort ||
-        query.direction) && (
+        (showSort && (query.sort || query.direction))) && (
         <Link
           href={`${pathname}?limit=${query.limit}`}
           className="filter-reset"

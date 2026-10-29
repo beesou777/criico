@@ -69,6 +69,20 @@ const mockPlayers: PlayerOption[] = [
   },
 ];
 
+function searchPlayer(playerName: string, teamName: string) {
+  fireEvent.change(
+    screen.getByRole('searchbox', { name: `Search ${teamName} squad` }),
+    { target: { value: playerName } },
+  );
+}
+
+function addPlayer(playerName: string, teamName: string) {
+  searchPlayer(playerName, teamName);
+  fireEvent.click(
+    screen.getByRole('button', { name: `Add ${playerName} to match` }),
+  );
+}
+
 describe('MatchForm UI & Validation Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -87,31 +101,23 @@ describe('MatchForm UI & Validation Tests', () => {
     ).toBeInTheDocument();
   });
 
-  it('displays the two distinct squad sections for Team A and Team B', () => {
+  it('shows team selectors without listing full squads until a search is entered', () => {
     render(<MatchForm teams={mockTeams} players={mockPlayers} />);
 
     expect(screen.getByTestId('team-A-section')).toBeInTheDocument();
     expect(screen.getByTestId('team-B-section')).toBeInTheDocument();
-
-    // Check that available players for Team A are visible with roles
+    expect(screen.queryByText('Aasif Sheikh')).not.toBeInTheDocument();
+    searchPlayer('Aasif', 'Janakpur Bolts');
     expect(screen.getByText('Aasif Sheikh')).toBeInTheDocument();
-    expect(screen.getByText('Lalit Rajbanshi')).toBeInTheDocument();
-
-    // Check available players for Team B
-    expect(screen.getByText('Dipendra Singh Airee')).toBeInTheDocument();
-    expect(screen.getByText('Hemant Dhami')).toBeInTheDocument();
+    expect(screen.queryByText('Dipendra Singh Airee')).not.toBeInTheDocument();
   });
 
-  it('adds player to active figures and defaults runs and wickets to zero', () => {
+  it('adds a selected player to the grouped table with zeroed figures', () => {
     render(<MatchForm teams={mockTeams} players={mockPlayers} />);
-
-    // Click "Add" on Aasif Sheikh
-    const addAasifBtn = screen.getByRole('button', {
-      name: 'Add Aasif Sheikh to match',
-    });
-    fireEvent.click(addAasifBtn);
-
-    // Active participant card should appear
+    addPlayer('Aasif Sheikh', 'Janakpur Bolts');
+    expect(
+      screen.getByRole('table', { name: 'Player performance figures' }),
+    ).toBeInTheDocument();
     expect(
       screen.getByTestId('participant-aaaa1111-1111-1111-1111-111111111111'),
     ).toBeInTheDocument();
@@ -123,17 +129,18 @@ describe('MatchForm UI & Validation Tests', () => {
     expect(wicketsInput).toHaveValue(0);
 
     // Participant count in summary should update
-    expect(screen.getByText('1 participant')).toBeInTheDocument();
-    expect(screen.getByText(/1 from Janakpur Bolts/i)).toBeInTheDocument();
+    expect(document.querySelector('.submission-summary')).toHaveTextContent(
+      '1 player participating',
+    );
+    expect(document.querySelector('.submission-summary')).toHaveTextContent(
+      '1 Janakpur Bolts',
+    );
   });
 
   it('CRITICAL: triggers UI toast notification when negative runs are submitted and aborts', async () => {
     render(<MatchForm teams={mockTeams} players={mockPlayers} />);
 
-    // Add Aasif Sheikh
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Add Aasif Sheikh to match' }),
-    );
+    addPlayer('Aasif Sheikh', 'Janakpur Bolts');
 
     // Set negative runs (-15)
     const runsInput = screen.getByLabelText('Runs scored by Aasif Sheikh');
@@ -158,10 +165,7 @@ describe('MatchForm UI & Validation Tests', () => {
   it('triggers UI toast notification when negative wickets are submitted', async () => {
     render(<MatchForm teams={mockTeams} players={mockPlayers} />);
 
-    // Add Lalit Rajbanshi
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Add Lalit Rajbanshi to match' }),
-    );
+    addPlayer('Lalit Rajbanshi', 'Janakpur Bolts');
 
     // Set negative wickets (-2)
     const wicketsInput = screen.getByLabelText(
@@ -198,10 +202,7 @@ describe('MatchForm UI & Validation Tests', () => {
   it('allows removing a participant and re-enabling them in the available squad', () => {
     render(<MatchForm teams={mockTeams} players={mockPlayers} />);
 
-    // Add Aasif
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Add Aasif Sheikh to match' }),
-    );
+    addPlayer('Aasif Sheikh', 'Janakpur Bolts');
     expect(
       screen.getByTestId('participant-aaaa1111-1111-1111-1111-111111111111'),
     ).toBeInTheDocument();
@@ -223,13 +224,43 @@ describe('MatchForm UI & Validation Tests', () => {
     ).toBeInTheDocument();
   });
 
+  it('preserves figures when another participant is added and a player is re-added', () => {
+    render(<MatchForm teams={mockTeams} players={mockPlayers} />);
+    addPlayer('Aasif Sheikh', 'Janakpur Bolts');
+    fireEvent.change(screen.getByLabelText('Runs scored by Aasif Sheikh'), {
+      target: { value: '45' },
+    });
+
+    addPlayer('Lalit Rajbanshi', 'Janakpur Bolts');
+    expect(screen.getByLabelText('Runs scored by Aasif Sheikh')).toHaveValue(
+      45,
+    );
+    fireEvent.change(screen.getByLabelText('Runs scored by Lalit Rajbanshi'), {
+      target: { value: '22' },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Remove Lalit Rajbanshi from match',
+      }),
+    );
+    searchPlayer('Lalit Rajbanshi', 'Janakpur Bolts');
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Add Lalit Rajbanshi to match' }),
+    );
+
+    expect(screen.getByLabelText('Runs scored by Aasif Sheikh')).toHaveValue(
+      45,
+    );
+    expect(screen.getByLabelText('Runs scored by Lalit Rajbanshi')).toHaveValue(
+      22,
+    );
+  });
+
   it('revalidates selected players when a team changes and notifies user', () => {
     render(<MatchForm teams={mockTeams} players={mockPlayers} />);
 
-    // Add Aasif from Janakpur Bolts (Team A)
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Add Aasif Sheikh to match' }),
-    );
+    addPlayer('Aasif Sheikh', 'Janakpur Bolts');
     expect(
       screen.getByTestId('participant-aaaa1111-1111-1111-1111-111111111111'),
     ).toBeInTheDocument();
@@ -264,15 +295,8 @@ describe('MatchForm UI & Validation Tests', () => {
 
     render(<MatchForm teams={mockTeams} players={mockPlayers} />);
 
-    // Add Aasif (Team A) and Dipendra (Team B)
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Add Aasif Sheikh to match' }),
-    );
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Add Dipendra Singh Airee to match',
-      }),
-    );
+    addPlayer('Aasif Sheikh', 'Janakpur Bolts');
+    addPlayer('Dipendra Singh Airee', 'Sudurpaschim Royals');
 
     // Enter performance figures
     fireEvent.change(screen.getByLabelText('Runs scored by Aasif Sheikh'), {

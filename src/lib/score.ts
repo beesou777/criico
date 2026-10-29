@@ -22,8 +22,22 @@ export interface ScoreBreakdown {
   total: number;
   runs: number;
   wickets: number;
+  roleBonus: number;
   experience: number;
   keeper: number;
+}
+
+export type ExperienceStatus = 'Rookie' | 'Regular' | 'Veteran';
+
+export function getExperienceStatus(matchesPlayed: number): ExperienceStatus {
+  if (!Number.isInteger(matchesPlayed) || matchesPlayed < 0) {
+    throw new RangeError('Matches played must be a non-negative integer.');
+  }
+  return matchesPlayed < 5
+    ? 'Rookie'
+    : matchesPlayed > 20
+      ? 'Veteran'
+      : 'Regular';
 }
 
 /**
@@ -44,11 +58,14 @@ export function calculateImpactScore(input: ScoreInput): ScoreBreakdown {
   const stats = scoreInput.parse(input);
 
   // Scaled by 100 (cents) to guarantee exact integer calculations
-  const runsHundredths =
-    stats.totalRuns * (stats.role === 'Batsman' ? 156 : 120);
-
-  const wicketsHundredths =
-    stats.totalWickets * (stats.role === 'Bowler' ? 3000 : 2000);
+  const runsHundredths = stats.totalRuns * 120;
+  const wicketsHundredths = stats.totalWickets * 2000;
+  const roleBonusHundredths =
+    stats.role === 'Batsman'
+      ? stats.totalRuns * 36
+      : stats.role === 'Bowler'
+        ? stats.totalWickets * 1000
+        : 0;
 
   const experienceHundredths =
     stats.matchesPlayed < 5 ? -5000 : stats.matchesPlayed > 20 ? 10000 : 0;
@@ -58,6 +75,7 @@ export function calculateImpactScore(input: ScoreInput): ScoreBreakdown {
   const totalHundredths =
     runsHundredths +
     wicketsHundredths +
+    roleBonusHundredths +
     experienceHundredths +
     keeperHundredths;
 
@@ -65,6 +83,7 @@ export function calculateImpactScore(input: ScoreInput): ScoreBreakdown {
     total: totalHundredths / 100,
     runs: runsHundredths / 100,
     wickets: wicketsHundredths / 100,
+    roleBonus: roleBonusHundredths / 100,
     experience: experienceHundredths / 100,
     keeper: keeperHundredths / 100,
   };

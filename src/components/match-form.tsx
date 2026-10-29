@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, type FormEvent } from 'react';
+import { memo, useCallback, useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -8,7 +8,6 @@ import {
   LoaderCircle,
   Search,
   X,
-  UsersRound,
   Trophy,
   Calendar,
   Plus,
@@ -21,6 +20,98 @@ import {
   type Team,
 } from '@/lib/contracts';
 import { submitJSON } from '@/lib/client-api';
+
+type PlayerStat = { runs: number | string; wickets: number | string };
+
+const PerformanceRow = memo(function PerformanceRow({
+  player,
+  side,
+  stat,
+  onUpdate,
+  onRemove,
+}: {
+  player: PlayerOption;
+  side: 'A' | 'B';
+  stat: PlayerStat;
+  onUpdate: (id: string, field: 'runs' | 'wickets', value: string) => void;
+  onRemove: (id: string) => void;
+}) {
+  const hasNegativeRuns = typeof stat.runs === 'number' && stat.runs < 0;
+  const hasNegativeWickets =
+    typeof stat.wickets === 'number' && stat.wickets < 0;
+
+  return (
+    <tr
+      className="performance-player-row"
+      data-testid={`participant-${player.id}`}
+    >
+      <td className="performance-player-cell" data-label="Player">
+        <span className="performance-player-name">{player.name}</span>
+        <span className="role-tag">{player.role}</span>
+      </td>
+      <td className="performance-stat-cell" data-label="Runs">
+        <label className="sr-only" htmlFor={`runs-${player.id}`}>
+          Runs scored by {player.name}
+        </label>
+        <input
+          id={`runs-${player.id}`}
+          type="number"
+          name={`runs-${player.id}`}
+          min="0"
+          step="1"
+          required
+          value={stat.runs}
+          onChange={(event) => onUpdate(player.id, 'runs', event.target.value)}
+          className={`stat-input ${hasNegativeRuns ? 'input-error' : ''}`}
+          aria-label={`Runs scored by ${player.name}`}
+          aria-invalid={hasNegativeRuns}
+        />
+        {hasNegativeRuns && (
+          <span className="inline-stat-error" role="alert">
+            Must be ≥ 0
+          </span>
+        )}
+      </td>
+      <td className="performance-stat-cell" data-label="Wickets">
+        <label className="sr-only" htmlFor={`wickets-${player.id}`}>
+          Wickets taken by {player.name}
+        </label>
+        <input
+          id={`wickets-${player.id}`}
+          type="number"
+          name={`wickets-${player.id}`}
+          min="0"
+          step="1"
+          required
+          value={stat.wickets}
+          onChange={(event) =>
+            onUpdate(player.id, 'wickets', event.target.value)
+          }
+          className={`stat-input ${hasNegativeWickets ? 'input-error' : ''}`}
+          aria-label={`Wickets taken by ${player.name}`}
+          aria-invalid={hasNegativeWickets}
+        />
+        {hasNegativeWickets && (
+          <span className="inline-stat-error" role="alert">
+            Must be ≥ 0
+          </span>
+        )}
+      </td>
+      <td className="performance-remove-cell" data-label="Remove">
+        <button
+          type="button"
+          onClick={() => onRemove(player.id)}
+          className="remove-participant-btn"
+          aria-label={`Remove ${player.name} from match`}
+          title="Remove player"
+        >
+          <X size={15} />
+        </button>
+        <span className="sr-only">Assigned to Team {side}</span>
+      </td>
+    </tr>
+  );
+});
 
 export function MatchForm({
   players,
@@ -53,13 +144,13 @@ export function MatchForm({
   const [selected, setSelected] = useState<string[]>([]);
 
   // Per-player performance figures: { runs: number, wickets: number }
-  const [stats, setStats] = useState<
-    Record<string, { runs: number | string; wickets: number | string }>
-  >({});
+  const [stats, setStats] = useState<Record<string, PlayerStat>>({});
 
   // Search queries for each team's squad selector
   const [searchA, setSearchA] = useState('');
   const [searchB, setSearchB] = useState('');
+  const [pickerOpenA, setPickerOpenA] = useState(false);
+  const [pickerOpenB, setPickerOpenB] = useState(false);
 
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,27 +188,28 @@ export function MatchForm({
     [teamBPlayers, selected],
   );
 
-  // Available unselected players for Team A matching search
-  const unselectedA = useMemo(() => {
-    const pool = teamAPlayers.filter((p) => !selected.includes(p.id));
-    if (!searchA.trim()) return pool;
+  // Search results are only shown while a picker is open and a query exists.
+  const matchingA = useMemo(() => {
+    if (!searchA.trim()) return [];
     const q = searchA.toLowerCase().trim();
-    return pool.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q),
-    );
-  }, [teamAPlayers, selected, searchA]);
+    return teamAPlayers
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [teamAPlayers, searchA]);
 
-  // Available unselected players for Team B matching search
-  const unselectedB = useMemo(() => {
-    const pool = teamBPlayers.filter((p) => !selected.includes(p.id));
-    if (!searchB.trim()) return pool;
+  const matchingB = useMemo(() => {
+    if (!searchB.trim()) return [];
     const q = searchB.toLowerCase().trim();
-    return pool.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q),
-    );
-  }, [teamBPlayers, selected, searchB]);
+    return teamBPlayers
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [teamBPlayers, searchB]);
 
   // Handle Team A change with graceful revalidation
   const handleTeamAChange = (newTeamA: string) => {
@@ -134,6 +226,7 @@ export function MatchForm({
       );
     }
     setSearchA('');
+    setPickerOpenA(false);
     if (!pending) setSubmissionKey(null);
   };
 
@@ -152,40 +245,50 @@ export function MatchForm({
       );
     }
     setSearchB('');
+    setPickerOpenB(false);
     if (!pending) setSubmissionKey(null);
   };
 
   // Add participant to match
-  const addParticipant = (id: string) => {
-    setSelected((prev) => (prev.includes(id) ? prev : [...prev, id]));
-    setStats((prev) => ({
-      ...prev,
-      [id]: prev[id] ?? { runs: 0, wickets: 0 },
-    }));
-    setError(null);
-    if (!pending) setSubmissionKey(null);
-  };
+  const addParticipant = useCallback(
+    (id: string) => {
+      setSelected((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      setStats((prev) => ({
+        ...prev,
+        [id]: prev[id] ?? { runs: 0, wickets: 0 },
+      }));
+      setError(null);
+      if (!pending) setSubmissionKey(null);
+    },
+    [pending],
+  );
 
   // Remove participant from match
-  const removeParticipant = (id: string) => {
-    setSelected((prev) => prev.filter((item) => item !== id));
-    setError(null);
-    if (!pending) setSubmissionKey(null);
-  };
+  const removeParticipant = useCallback(
+    (id: string) => {
+      setSelected((prev) => prev.filter((item) => item !== id));
+      setError(null);
+      if (!pending) setSubmissionKey(null);
+    },
+    [pending],
+  );
 
   // Update stat values
-  const updateStat = (id: string, field: 'runs' | 'wickets', value: string) => {
-    const parsed = value === '' ? '' : Number(value);
-    setStats((prev) => ({
-      ...prev,
-      [id]: {
-        ...(prev[id] ?? { runs: 0, wickets: 0 }),
-        [field]: parsed,
-      },
-    }));
-    setError(null);
-    if (!pending) setSubmissionKey(null);
-  };
+  const updateStat = useCallback(
+    (id: string, field: 'runs' | 'wickets', value: string) => {
+      const parsed = value === '' ? '' : Number(value);
+      setStats((prev) => ({
+        ...prev,
+        [id]: {
+          ...(prev[id] ?? { runs: 0, wickets: 0 }),
+          [field]: parsed,
+        },
+      }));
+      setError(null);
+      if (!pending) setSubmissionKey(null);
+    },
+    [pending],
+  );
 
   // Submission handler with comprehensive validation
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -296,46 +399,63 @@ export function MatchForm({
     }
   }
 
-  // Render a team's participant selection and performance figures
-  const renderTeamSection = (side: 'A' | 'B', teamName: string) => {
+  const renderTeamPicker = (side: 'A' | 'B', teamName: string) => {
     const isTeamA = side === 'A';
     const sideLabel = isTeamA ? 'Team A' : 'Team B';
     const sideClass = isTeamA ? 'team-a' : 'team-b';
     const teamSquad = isTeamA ? teamAPlayers : teamBPlayers;
     const selectedList = isTeamA ? selectedA : selectedB;
-    const unselectedList = isTeamA ? unselectedA : unselectedB;
     const searchVal = isTeamA ? searchA : searchB;
     const setSearchVal = isTeamA ? setSearchA : setSearchB;
+    const matches = isTeamA ? matchingA : matchingB;
+    const pickerOpen = isTeamA ? pickerOpenA : pickerOpenB;
+    const setPickerOpen = isTeamA ? setPickerOpenA : setPickerOpenB;
 
     return (
-      <div
+      <section
         className={`team-performance-col ${sideClass}`}
         data-testid={`team-${side}-section`}
+        aria-labelledby={`team-${side}-heading`}
       >
-        {/* Team Section Header */}
         <div className="team-col-header">
           <div className="team-col-title">
             <span className={`side-badge ${sideClass}`}>{sideLabel}</span>
-            <h3 className="team-col-name">{teamName}</h3>
+            <h3 className="team-col-name" id={`team-${side}-heading`}>
+              {teamName}
+            </h3>
           </div>
           <span
             className="participant-count-pill"
             aria-label={`${selectedList.length} players selected for ${sideLabel}`}
           >
-            {selectedList.length} participant
-            {selectedList.length === 1 ? '' : 's'}
+            {selectedList.length} selected
           </span>
         </div>
 
-        {/* Searchable Player Picker */}
-        <div className="team-picker-section">
+        <div
+          className="team-picker-section"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setPickerOpen(false);
+          }}
+          onBlur={(event) => {
+            if (
+              !event.currentTarget.contains(event.relatedTarget as Node | null)
+            ) {
+              setPickerOpen(false);
+            }
+          }}
+        >
           <div className="team-picker-search-bar">
             <Search size={15} className="picker-search-icon" />
             <input
-              type="text"
+              type="search"
               value={searchVal}
-              onChange={(e) => setSearchVal(e.target.value)}
-              placeholder={`Search & add ${teamName} player…`}
+              onChange={(event) => {
+                setSearchVal(event.target.value);
+                setPickerOpen(true);
+              }}
+              onFocus={() => setPickerOpen(true)}
+              placeholder={`Search ${teamName} players`}
               aria-label={`Search ${teamName} squad`}
               className="team-search-input"
             />
@@ -344,194 +464,138 @@ export function MatchForm({
                 type="button"
                 onClick={() => setSearchVal('')}
                 className="picker-clear-search"
-                aria-label="Clear search"
+                aria-label={`Clear ${teamName} player search`}
               >
                 <X size={14} />
               </button>
             )}
           </div>
 
-          {/* Available Squad List (Filtered unselected players) */}
-          <div className="available-squad-container">
-            {unselectedList.length > 0 ? (
-              <ul
-                className="available-player-list"
-                aria-label={`Available players for ${teamName}`}
-              >
-                {unselectedList.map((player) => (
-                  <li key={player.id} className="available-player-item">
-                    <div className="available-player-info">
-                      <span className="available-player-name">
-                        {player.name}
-                      </span>
-                      <span className="role-tag">{player.role}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => addParticipant(player.id)}
-                      className="add-participant-btn"
-                      aria-label={`Add ${player.name} to match`}
-                    >
-                      <Plus size={14} />
-                      <span>Add</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : teamSquad.length === 0 ? (
-              <p className="picker-empty-note">
-                No players registered for {teamName} yet.{' '}
-                <Link
-                  href="/dashboard/players/new"
-                  className="picker-link-inline"
-                >
-                  Add players
-                </Link>
-              </p>
-            ) : selectedList.length === teamSquad.length ? (
-              <p className="picker-empty-note">
-                All {teamSquad.length} squad members have been added to this
-                match.
-              </p>
-            ) : (
-              <p className="picker-empty-note">
-                No players match &ldquo;{searchVal}&rdquo;.
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Selected Participants / Match Figures */}
-        <div className="team-figures-section">
-          <div className="figures-header">
-            <h4>Match Figures</h4>
-            <span className="figures-subtitle">
-              {selectedList.length === 0
-                ? 'No figures entered'
-                : `${selectedList.length} player${selectedList.length === 1 ? '' : 's'} in match`}
-            </span>
-          </div>
-
-          {selectedList.length === 0 ? (
-            <div className="figures-empty-state">
-              <UsersRound size={28} className="empty-icon" />
-              <p className="empty-title">No participants added yet</p>
-              <p className="empty-description">
-                Use the search box above to add players who took part in this
-                fixture.
-              </p>
-            </div>
-          ) : (
-            <div className="participant-cards-list">
-              {selectedList.map((player) => {
-                const currentStat = stats[player.id] ?? {
-                  runs: 0,
-                  wickets: 0,
-                };
-                const runsVal = currentStat.runs;
-                const wicketsVal = currentStat.wickets;
-                const hasNegativeRuns =
-                  typeof runsVal === 'number' && runsVal < 0;
-                const hasNegativeWickets =
-                  typeof wicketsVal === 'number' && wicketsVal < 0;
-
-                return (
-                  <div
-                    key={player.id}
-                    className="participant-card"
-                    data-testid={`participant-${player.id}`}
+          {pickerOpen && searchVal.trim() && (
+            <div
+              className="available-squad-container"
+              id={`team-${side}-search-results`}
+            >
+              {teamSquad.length === 0 ? (
+                <p className="picker-empty-note">
+                  No players registered for {teamName}.{' '}
+                  <Link
+                    href="/dashboard/players/new"
+                    className="picker-link-inline"
                   >
-                    <div className="participant-card-top">
-                      <div className="participant-info">
-                        <strong className="participant-name">
-                          {player.name}
-                        </strong>
-                        <span className="role-tag">{player.role}</span>
-                        <span
-                          className={`side-chip-tiny ${sideClass}`}
-                          title={`Playing for ${sideLabel}`}
-                        >
-                          {sideLabel}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeParticipant(player.id)}
-                        className="remove-participant-btn"
-                        aria-label={`Remove ${player.name} from match`}
-                        title="Remove player"
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-
-                    <div className="participant-inputs-row">
-                      <div className="stat-input-group">
-                        <label
-                          htmlFor={`runs-${player.id}`}
-                          className="stat-label"
-                        >
-                          Runs
-                        </label>
-                        <input
-                          id={`runs-${player.id}`}
-                          type="number"
-                          name={`runs-${player.id}`}
-                          min="0"
-                          step="1"
-                          required
-                          value={runsVal}
-                          onChange={(e) =>
-                            updateStat(player.id, 'runs', e.target.value)
-                          }
-                          className={`stat-input ${hasNegativeRuns ? 'input-error' : ''}`}
-                          aria-label={`Runs scored by ${player.name}`}
-                        />
-                        {hasNegativeRuns && (
-                          <span className="inline-stat-error" role="alert">
-                            Must be ≥ 0
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="stat-input-group">
-                        <label
-                          htmlFor={`wickets-${player.id}`}
-                          className="stat-label"
-                        >
-                          Wickets
-                        </label>
-                        <input
-                          id={`wickets-${player.id}`}
-                          type="number"
-                          name={`wickets-${player.id}`}
-                          min="0"
-                          step="1"
-                          required
-                          value={wicketsVal}
-                          onChange={(e) =>
-                            updateStat(player.id, 'wickets', e.target.value)
-                          }
-                          className={`stat-input ${hasNegativeWickets ? 'input-error' : ''}`}
-                          aria-label={`Wickets taken by ${player.name}`}
-                        />
-                        {hasNegativeWickets && (
-                          <span className="inline-stat-error" role="alert">
-                            Must be ≥ 0
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    Add players
+                  </Link>
+                </p>
+              ) : matches.length > 0 ? (
+                <>
+                  <ul
+                    className="available-player-list"
+                    aria-label={`Search results for ${teamName}`}
+                  >
+                    {matches.map((player) => {
+                      const isSelected = selected.includes(player.id);
+                      return (
+                        <li key={player.id} className="available-player-item">
+                          <div className="available-player-info">
+                            <span className="available-player-name">
+                              {player.name}
+                            </span>
+                            <span className="role-tag">{player.role}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => addParticipant(player.id)}
+                            className={`add-participant-btn${isSelected ? ' is-added' : ''}`}
+                            aria-label={
+                              isSelected
+                                ? `${player.name} already added to match`
+                                : `Add ${player.name} to match`
+                            }
+                            aria-pressed={isSelected}
+                            disabled={isSelected}
+                          >
+                            {isSelected ? (
+                              'Added'
+                            ) : (
+                              <>
+                                <Plus size={14} /> Add
+                              </>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {teamSquad.filter(
+                    (player) =>
+                      player.name
+                        .toLowerCase()
+                        .includes(searchVal.toLowerCase()) ||
+                      player.role
+                        .toLowerCase()
+                        .includes(searchVal.toLowerCase()),
+                  ).length > matches.length && (
+                    <p className="picker-result-note">
+                      Refine your search to see more matches.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="picker-empty-note">
+                  No players match “{searchVal}”.
+                </p>
+              )}
             </div>
           )}
+
+          {pickerOpen && !searchVal.trim() && (
+            <p className="picker-search-prompt">
+              Type a player name or role to search this squad.
+            </p>
+          )}
         </div>
-      </div>
+      </section>
     );
   };
 
+  const renderPerformanceGroup = (
+    side: 'A' | 'B',
+    teamName: string,
+    teamPlayersSelected: PlayerOption[],
+  ) => (
+    <tbody key={side}>
+      <tr
+        className={`performance-team-heading ${side === 'A' ? 'team-a' : 'team-b'}`}
+      >
+        <th colSpan={4} scope="rowgroup">
+          <span className={`side-badge ${side === 'A' ? 'team-a' : 'team-b'}`}>
+            Team {side}
+          </span>
+          <span>{teamName}</span>
+          <span className="performance-group-count">
+            {teamPlayersSelected.length} player
+            {teamPlayersSelected.length === 1 ? '' : 's'}
+          </span>
+        </th>
+      </tr>
+      {teamPlayersSelected.length ? (
+        teamPlayersSelected.map((player) => (
+          <PerformanceRow
+            key={player.id}
+            player={player}
+            side={side}
+            stat={stats[player.id] ?? { runs: 0, wickets: 0 }}
+            onUpdate={updateStat}
+            onRemove={removeParticipant}
+          />
+        ))
+      ) : (
+        <tr className="performance-empty-row">
+          <td colSpan={4}>No participants selected for this team yet.</td>
+        </tr>
+      )}
+    </tbody>
+  );
   return (
     <form className="match-editor-form" onSubmit={submit}>
       {/* SECTION 1: Match Details & Fixture Setup */}
@@ -672,15 +736,12 @@ export function MatchForm({
         </div>
       </fieldset>
 
-      {/* SECTION 2: Player Performance Selection & Entry */}
-      <fieldset className="match-performances-fieldset" disabled={pending}>
-        <legend className="fieldset-legend">Player performances</legend>
-
+      {/* SECTION 2: Participant selection */}
+      <fieldset className="match-participants-fieldset" disabled={pending}>
+        <legend className="fieldset-legend">Choose participants</legend>
         <p className="performances-instructions">
-          Select squad participants from each team, then enter their match
-          figures. Team side is assigned automatically from club affiliation.
+          Search each selected squad, then add the players who took part.
         </p>
-
         {!teamA || !teamB ? (
           <div className="unselected-teams-prompt">
             <AlertCircle size={24} className="prompt-icon" />
@@ -692,9 +753,39 @@ export function MatchForm({
           </div>
         ) : (
           <div className="squad-performance-grid">
-            {renderTeamSection('A', teamA)}
-            {renderTeamSection('B', teamB)}
+            {renderTeamPicker('A', teamA)}
+            {renderTeamPicker('B', teamB)}
           </div>
+        )}
+      </fieldset>
+
+      {/* SECTION 3: Compact performance entry */}
+      <fieldset className="match-performances-fieldset" disabled={pending}>
+        <legend className="fieldset-legend">Record player performances</legend>
+        {teamA && teamB ? (
+          <div className="performance-table-wrap">
+            <table
+              className="performance-entry-table"
+              aria-label="Player performance figures"
+            >
+              <thead>
+                <tr>
+                  <th scope="col">Player</th>
+                  <th scope="col">Runs</th>
+                  <th scope="col">Wickets</th>
+                  <th scope="col">
+                    <span className="sr-only">Remove</span>
+                  </th>
+                </tr>
+              </thead>
+              {renderPerformanceGroup('A', teamA, selectedA)}
+              {renderPerformanceGroup('B', teamB, selectedB)}
+            </table>
+          </div>
+        ) : (
+          <p className="performance-entry-prompt">
+            Choose Team A and Team B above to record player figures.
+          </p>
         )}
       </fieldset>
 
@@ -706,16 +797,16 @@ export function MatchForm({
         </div>
       )}
 
-      {/* SECTION 3: Summary & Primary Action Submission Bar */}
+      {/* SECTION 4: Summary & Primary Action Submission Bar */}
       <div className="match-submission-bar">
-        <div className="submission-summary">
+        <div className="submission-summary" role="status" aria-live="polite">
           <span className="summary-headline">
             <strong>{selected.length}</strong> player
             {selected.length === 1 ? '' : 's'} participating
           </span>
           <span className="summary-breakdown">
-            {teamA ? `${selectedA.length} from ${teamA}` : '0 from Team A'} ·{' '}
-            {teamB ? `${selectedB.length} from ${teamB}` : '0 from Team B'}
+            {teamA ? `${selectedA.length} ${teamA}` : '0 Team A'} ·{' '}
+            {teamB ? `${selectedB.length} ${teamB}` : '0 Team B'}
           </span>
         </div>
 
