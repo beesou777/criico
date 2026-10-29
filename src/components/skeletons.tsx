@@ -108,7 +108,7 @@ export function OverviewSkeleton() {
         ))}
       </section>
       <div className="overview-grid">
-        {['Leading impact', 'Recent matches'].map((title) => (
+        {['Top performances', 'Recent matches'].map((title) => (
           <section className="section-panel" key={title}>
             <div className="section-heading">
               <h2>{title}</h2>

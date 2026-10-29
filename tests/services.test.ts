@@ -7,6 +7,7 @@ import {
   deletePlayer,
   recordMatch,
   getDashboardSummary,
+  getTeams,
 } from '../src/lib/services';
 const mocks = vi.hoisted(() => ({
   query: vi.fn(),
@@ -37,6 +38,30 @@ const input = {
   expectedUpdatedAt: version,
 };
 describe('Transactional service regressions', () => {
+  it('loads owner-scoped teams with grouped actual player counts', async () => {
+    mocks.query.mockResolvedValueOnce({
+      rows: [
+        { id: 'team-1', name: 'Lions', playerCount: '12' },
+        { id: 'team-2', name: 'Yaks', playerCount: '0' },
+      ],
+    });
+
+    await expect(getTeams(ownerId)).resolves.toEqual([
+      { id: 'team-1', name: 'Lions', playerCount: 12 },
+      { id: 'team-2', name: 'Yaks', playerCount: 0 },
+    ]);
+    expect(mocks.query).toHaveBeenCalledWith(
+      expect.stringContaining('players."ownerId" = teams."ownerId"'),
+      [ownerId],
+    );
+    expect(mocks.query.mock.calls[0]?.[0]).toContain(
+      'WHERE teams."ownerId" = $1',
+    );
+    expect(mocks.query.mock.calls[0]?.[0]).toContain(
+      'GROUP BY teams.id, teams.name',
+    );
+  });
+
   it('accepts an unchanged microsecond timestamp and releases the transaction', async () => {
     mocks.clientQuery
       .mockResolvedValueOnce({ rows: [] })

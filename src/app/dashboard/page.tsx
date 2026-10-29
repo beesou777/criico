@@ -2,27 +2,38 @@ import Link from 'next/link';
 import { Plus, ArrowUpRight } from 'lucide-react';
 import { authenticatedData, authenticatedSummary } from '@/lib/backend';
 import {
-  leaderboardPageSchema,
+  playerPageSchema,
   matchPageSchema,
   numberFormat,
 } from '@/lib/contracts';
+import { calculateImpactScore } from '@/lib/score';
 import { PageHeading } from '@/components/page-heading';
 import { EmptyState } from '@/components/empty-state';
 import { MatchList } from '@/components/match-list';
-import { ScoreBreakdown } from '@/components/score-breakdown';
+
 export default async function DashboardPage() {
-  const [playerPage, matchPage, summary] = await Promise.all([
-    authenticatedData('/api/leaderboard?limit=1').then((data) =>
-      leaderboardPageSchema.parse(data),
+  const [topRunsPage, topWicketsPage, matchPage, summary] = await Promise.all([
+    authenticatedData('/api/players?sort=runs&direction=desc&limit=1').then(
+      (data) => playerPageSchema.parse(data),
+    ),
+    authenticatedData('/api/players?sort=wickets&direction=desc&limit=1').then(
+      (data) => playerPageSchema.parse(data),
     ),
     authenticatedData('/api/matches?limit=3').then((data) =>
       matchPageSchema.parse(data),
     ),
     authenticatedSummary(),
   ]);
-  const players = playerPage.data;
+
+  const topScorer = topRunsPage.data[0];
+  const topWicketTaker = topWicketsPage.data[0];
   const matches = matchPage.data;
-  const leader = players[0];
+
+  const topScorerScore = topScorer ? calculateImpactScore(topScorer) : null;
+  const topWicketScore = topWicketTaker
+    ? calculateImpactScore(topWicketTaker)
+    : null;
+
   return (
     <>
       <PageHeading
@@ -68,63 +79,101 @@ export default async function DashboardPage() {
       <div className="overview-grid">
         <section className="section-panel">
           <div className="section-heading">
-            <h2>Leading impact</h2>
+            <h2>Top performances</h2>
             <Link href="/dashboard/leaderboard">
               Full leaderboard <ArrowUpRight size={16} />
             </Link>
           </div>
-          {leader ? (
-            <div className="featured-player">
-              <div className="featured-badges">
-                <span className="rank-badge">#1 Impact Player</span>
-                <span className="role-tag">{leader.role}</span>
-                {leader.teamName ? (
-                  <span className="team-pill">{leader.teamName}</span>
-                ) : null}
-              </div>
-              <h3 className="featured-player-name">{leader.name}</h3>
+          {topScorer || topWicketTaker ? (
+            <div className="top-performers-list">
+              {topScorer && (
+                <article className="performer-row">
+                  <div className="performer-header">
+                    <div className="featured-badges">
+                      <span className="discipline-badge discipline-batting">
+                        Top Run Scorer
+                      </span>
+                      <span className="role-tag">{topScorer.role}</span>
+                      {topScorer.teamName ? (
+                        <span className="team-pill">{topScorer.teamName}</span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="performer-body">
+                    <div className="performer-main">
+                      <h3 className="performer-name">{topScorer.name}</h3>
+                      <div className="performer-meta">
+                        <span>{topScorer.matchesPlayed} matches</span>
+                        <span className="meta-bullet">·</span>
+                        <span>{topScorer.totalWickets} wickets</span>
+                        {topScorerScore && (
+                          <>
+                            <span className="meta-bullet">·</span>
+                            <span className="performer-impact">
+                              Impact {numberFormat.format(topScorerScore.total)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="performer-stat-badge stat-batting">
+                      <span className="stat-badge-num">
+                        {numberFormat.format(topScorer.totalRuns)}
+                      </span>
+                      <span className="stat-badge-unit">runs</span>
+                    </div>
+                  </div>
+                </article>
+              )}
 
-              <div className="featured-score-hero">
-                <div className="score-hero-info">
-                  <span className="score-hero-label">Cricket Impact Score</span>
-                  <span className="score-hero-hint">
-                    Ranked #1 across your club
-                  </span>
-                </div>
-                <strong className="score-hero-value">
-                  {numberFormat.format(leader.score.total)}
-                </strong>
-              </div>
-
-              <div className="leader-stats-grid">
-                <div className="stat-tile">
-                  <span className="stat-label">Matches</span>
-                  <span className="stat-val">{leader.matchesPlayed}</span>
-                </div>
-                <div className="stat-tile">
-                  <span className="stat-label">Runs</span>
-                  <span className="stat-val">
-                    {numberFormat.format(leader.totalRuns)}
-                  </span>
-                </div>
-                <div className="stat-tile">
-                  <span className="stat-label">Wickets</span>
-                  <span className="stat-val">{leader.totalWickets}</span>
-                </div>
-                <div className="stat-tile">
-                  <span className="stat-label">Base Price</span>
-                  <span className="stat-val">
-                    NPR {numberFormat.format(leader.basePrice)}
-                  </span>
-                </div>
-              </div>
-
-              <ScoreBreakdown player={leader} showScore={false} />
+              {topWicketTaker && (
+                <article className="performer-row">
+                  <div className="performer-header">
+                    <div className="featured-badges">
+                      <span className="discipline-badge discipline-bowling">
+                        Top Wicket Taker
+                      </span>
+                      <span className="role-tag">{topWicketTaker.role}</span>
+                      {topWicketTaker.teamName ? (
+                        <span className="team-pill">
+                          {topWicketTaker.teamName}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="performer-body">
+                    <div className="performer-main">
+                      <h3 className="performer-name">{topWicketTaker.name}</h3>
+                      <div className="performer-meta">
+                        <span>{topWicketTaker.matchesPlayed} matches</span>
+                        <span className="meta-bullet">·</span>
+                        <span>
+                          {numberFormat.format(topWicketTaker.totalRuns)} runs
+                        </span>
+                        {topWicketScore && (
+                          <>
+                            <span className="meta-bullet">·</span>
+                            <span className="performer-impact">
+                              Impact {numberFormat.format(topWicketScore.total)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="performer-stat-badge stat-bowling">
+                      <span className="stat-badge-num">
+                        {topWicketTaker.totalWickets}
+                      </span>
+                      <span className="stat-badge-unit">wickets</span>
+                    </div>
+                  </div>
+                </article>
+              )}
             </div>
           ) : (
             <EmptyState
               title="Your first player starts the story."
-              description="Add your squad to see who makes the biggest impact."
+              description="Add your squad to see top run scorers and wicket takers."
               href="/dashboard/players/new"
               action="Add a player"
             />

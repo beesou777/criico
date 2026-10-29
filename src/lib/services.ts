@@ -50,6 +50,7 @@ export interface PlayerRecord {
 export interface TeamRecord {
   id: string;
   name: string;
+  playerCount: number;
 }
 
 export interface RankedPlayerRecord extends PlayerRecord {
@@ -257,19 +258,29 @@ export async function getPlayerOptions(ownerId: string) {
 }
 
 export async function getTeams(ownerId: string): Promise<TeamRecord[]> {
-  const res = await query<TeamRecord>(
-    'SELECT id, name FROM teams WHERE "ownerId" = $1 ORDER BY lower(name) COLLATE "C", id',
+  const res = await query<
+    Omit<TeamRecord, 'playerCount'> & { playerCount: string }
+  >(
+    `SELECT teams.id, teams.name, count(players.id)::text AS "playerCount"
+     FROM teams
+     LEFT JOIN players ON players."teamId" = teams.id AND players."ownerId" = teams."ownerId"
+     WHERE teams."ownerId" = $1
+     GROUP BY teams.id, teams.name
+     ORDER BY lower(teams.name) COLLATE "C", teams.id`,
     [ownerId],
   );
-  return res.rows;
+  return res.rows.map((team) => ({
+    ...team,
+    playerCount: Number(team.playerCount),
+  }));
 }
 
 export async function createTeam(
   ownerId: string,
   name: string,
-): Promise<TeamRecord> {
+): Promise<Pick<TeamRecord, 'id' | 'name'>> {
   try {
-    const res = await query<TeamRecord>(
+    const res = await query<Pick<TeamRecord, 'id' | 'name'>>(
       'INSERT INTO teams ("ownerId", name) VALUES ($1, $2) RETURNING id, name',
       [ownerId, name.trim()],
     );
@@ -512,7 +523,9 @@ export interface DashboardSummary {
   totalRuns: number;
 }
 
-export async function getDashboardSummary(ownerId: string): Promise<DashboardSummary> {
+export async function getDashboardSummary(
+  ownerId: string,
+): Promise<DashboardSummary> {
   const res = await query<{
     totalPlayers: string;
     totalTeams: string;
