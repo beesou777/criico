@@ -2,7 +2,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { canonicalMatch } from '../src/lib/validation';
-import { updatePlayer, deletePlayer, recordMatch } from '../src/lib/services';
+import {
+  updatePlayer,
+  deletePlayer,
+  recordMatch,
+  getDashboardSummary,
+} from '../src/lib/services';
 const mocks = vi.hoisted(() => ({
   query: vi.fn(),
   clientQuery: vi.fn(),
@@ -189,5 +194,30 @@ describe('Transactional service regressions', () => {
     expect(res.match.id).toBe('match-1');
     // Database transaction connect was never called
     expect(mocks.clientQuery).not.toHaveBeenCalled();
+  });
+  it('aggregates dashboard summary scoped to the authenticated owner', async () => {
+    mocks.query.mockResolvedValueOnce({
+      rows: [
+        {
+          totalPlayers: '14',
+          totalTeams: '2',
+          totalMatches: '5',
+          totalRuns: '1420',
+        },
+      ],
+    });
+
+    const summary = await getDashboardSummary(ownerId);
+
+    expect(summary).toEqual({
+      totalPlayers: 14,
+      totalTeams: 2,
+      totalMatches: 5,
+      totalRuns: 1420,
+    });
+    expect(mocks.query).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE "ownerId" = $1'),
+      [ownerId],
+    );
   });
 });

@@ -94,12 +94,12 @@ export function OverviewSkeleton() {
       <div className="page-heading">
         <div>
           <h1>Your clubhouse.</h1>
-          <p>The squad, the matchbook, and the performances that matter.</p>
+          <p>Your teams, matches, and player performances.</p>
         </div>
         <Skeleton className="skeleton-action" />
       </div>
       <section className="summary-row" aria-hidden="true">
-        {Array.from({ length: 3 }, (_, index) => (
+        {Array.from({ length: 4 }, (_, index) => (
           <div key={index}>
             <Skeleton className="skeleton-label" />
             <Skeleton className="skeleton-stat" />

@@ -505,19 +505,32 @@ export async function getMatches(
   return { data: result.rows.map(formatMatchRow), meta: result.meta };
 }
 
-export async function getDashboardSummary(ownerId: string) {
+export interface DashboardSummary {
+  totalPlayers: number;
+  totalTeams: number;
+  totalMatches: number;
+  totalRuns: number;
+}
+
+export async function getDashboardSummary(ownerId: string): Promise<DashboardSummary> {
   const res = await query<{
     totalPlayers: string;
+    totalTeams: string;
     totalMatches: string;
     totalRuns: string;
   }>(
-    `SELECT (SELECT count(*) FROM players WHERE "ownerId" = $1)::text AS "totalPlayers", (SELECT count(*) FROM matches WHERE "ownerId" = $1)::text AS "totalMatches", (SELECT COALESCE(sum("totalRuns"), 0) FROM players WHERE "ownerId" = $1)::text AS "totalRuns"`,
+    `SELECT
+      (SELECT count(*) FROM players WHERE "ownerId" = $1)::text AS "totalPlayers",
+      (SELECT count(*) FROM teams WHERE "ownerId" = $1)::text AS "totalTeams",
+      (SELECT count(*) FROM matches WHERE "ownerId" = $1)::text AS "totalMatches",
+      (SELECT COALESCE(sum("totalRuns"), 0) FROM players WHERE "ownerId" = $1)::text AS "totalRuns"`,
     [ownerId],
   );
   const row = res.rows[0];
   if (!row) throw new ServiceError(500, 'Could not load summary.');
   return {
     totalPlayers: Number(row.totalPlayers),
+    totalTeams: Number(row.totalTeams),
     totalMatches: Number(row.totalMatches),
     totalRuns: Number(row.totalRuns),
   };

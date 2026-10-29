@@ -1,12 +1,20 @@
 import type { RankedPlayer } from '@/lib/contracts';
 import { numberFormat } from '@/lib/contracts';
-export function ScoreBreakdown({ player }: { player: RankedPlayer }) {
+export function ScoreBreakdown({
+  player,
+  showScore = true,
+}: {
+  player: RankedPlayer;
+  showScore?: boolean;
+}) {
   const s = player.score;
   return (
     <details className="score-details">
       <summary>
-        <span className="score-value">{numberFormat.format(s.total)}</span>
-        <span className="score-hint">View breakdown</span>
+        {showScore && (
+          <span className="score-value">{numberFormat.format(s.total)}</span>
+        )}
+        <span className="score-hint">View score breakdown</span>
       </summary>
       <dl>
         <div>

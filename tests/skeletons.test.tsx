@@ -21,7 +21,7 @@ it('reserves the overview summary and section layout', () => {
   expect(
     screen.getByRole('heading', { name: 'Your clubhouse.' }),
   ).toBeInTheDocument();
-  expect(container.querySelectorAll('.summary-row > div')).toHaveLength(3);
+  expect(container.querySelectorAll('.summary-row > div')).toHaveLength(4);
   expect(
     container.querySelectorAll('.overview-grid .section-panel'),
   ).toHaveLength(2);

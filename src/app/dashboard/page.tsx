@@ -27,7 +27,7 @@ export default async function DashboardPage() {
     <>
       <PageHeading
         title="Your clubhouse."
-        description="The squad, the matchbook, and the performances that matter."
+        description="Your teams, matches, and player performances."
         action={
           <Link href="/dashboard/matches/new" className="button button-primary">
             <Plus size={18} />
@@ -35,25 +35,34 @@ export default async function DashboardPage() {
           </Link>
         }
       />
-      <section className="summary-row" aria-label="Squad overview">
+      <section className="summary-row" aria-label="Clubhouse overview">
         <div>
           <span>Players in your roster</span>
           <strong>{summary.totalPlayers.toString().padStart(2, '0')}</strong>
           <Link href="/dashboard/players">
-            Manage squad <ArrowUpRight size={16} />
+            Manage squad <ArrowUpRight size={15} />
           </Link>
         </div>
         <div>
-          <span>Matches recorded here</span>
+          <span>Teams in your club</span>
+          <strong>{summary.totalTeams.toString().padStart(2, '0')}</strong>
+          <Link href="/dashboard/teams">
+            View teams <ArrowUpRight size={15} />
+          </Link>
+        </div>
+        <div>
+          <span>Matches recorded</span>
           <strong>{summary.totalMatches.toString().padStart(2, '0')}</strong>
           <Link href="/dashboard/matches">
-            Open matchbook <ArrowUpRight size={16} />
+            Open matchbook <ArrowUpRight size={15} />
           </Link>
         </div>
         <div>
           <span>Career runs across roster</span>
           <strong>{numberFormat.format(summary.totalRuns)}</strong>
-          <small>Includes imported career statistics</small>
+          <Link href="/dashboard/leaderboard">
+            Standings <ArrowUpRight size={15} />
+          </Link>
         </div>
       </section>
       <div className="overview-grid">
@@ -66,14 +75,51 @@ export default async function DashboardPage() {
           </div>
           {leader ? (
             <div className="featured-player">
-              <span className="role-tag">{leader.role}</span>
-              <h3>{leader.name}</h3>
-              <p>
-                {leader.matchesPlayed} matches ·{' '}
-                {numberFormat.format(leader.totalRuns)} runs ·{' '}
-                {leader.totalWickets} wickets
-              </p>
-              <ScoreBreakdown player={leader} />
+              <div className="featured-badges">
+                <span className="rank-badge">#1 Impact Player</span>
+                <span className="role-tag">{leader.role}</span>
+                {leader.teamName ? (
+                  <span className="team-pill">{leader.teamName}</span>
+                ) : null}
+              </div>
+              <h3 className="featured-player-name">{leader.name}</h3>
+
+              <div className="featured-score-hero">
+                <div className="score-hero-info">
+                  <span className="score-hero-label">Cricket Impact Score</span>
+                  <span className="score-hero-hint">
+                    Ranked #1 across your club
+                  </span>
+                </div>
+                <strong className="score-hero-value">
+                  {numberFormat.format(leader.score.total)}
+                </strong>
+              </div>
+
+              <div className="leader-stats-grid">
+                <div className="stat-tile">
+                  <span className="stat-label">Matches</span>
+                  <span className="stat-val">{leader.matchesPlayed}</span>
+                </div>
+                <div className="stat-tile">
+                  <span className="stat-label">Runs</span>
+                  <span className="stat-val">
+                    {numberFormat.format(leader.totalRuns)}
+                  </span>
+                </div>
+                <div className="stat-tile">
+                  <span className="stat-label">Wickets</span>
+                  <span className="stat-val">{leader.totalWickets}</span>
+                </div>
+                <div className="stat-tile">
+                  <span className="stat-label">Base Price</span>
+                  <span className="stat-val">
+                    NPR {numberFormat.format(leader.basePrice)}
+                  </span>
+                </div>
+              </div>
+
+              <ScoreBreakdown player={leader} showScore={false} />
             </div>
           ) : (
             <EmptyState
