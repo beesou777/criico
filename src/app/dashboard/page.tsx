@@ -2,22 +2,18 @@ import Link from 'next/link';
 import { Plus, ArrowUpRight } from 'lucide-react';
 import { authenticatedData, authenticatedSummary } from '@/lib/backend';
 import {
-  playerPageSchema,
+  leaderboardPageSchema,
   matchPageSchema,
   numberFormat,
 } from '@/lib/contracts';
-import { calculateImpactScore } from '@/lib/score';
 import { PageHeading } from '@/components/page-heading';
 import { EmptyState } from '@/components/empty-state';
 import { MatchList } from '@/components/match-list';
 
 export default async function DashboardPage() {
-  const [topRunsPage, topWicketsPage, matchPage, summary] = await Promise.all([
-    authenticatedData('/api/players?sort=runs&direction=desc&limit=1').then(
-      (data) => playerPageSchema.parse(data),
-    ),
-    authenticatedData('/api/players?sort=wickets&direction=desc&limit=1').then(
-      (data) => playerPageSchema.parse(data),
+  const [leaderboardPage, matchPage, summary] = await Promise.all([
+    authenticatedData('/api/leaderboard?limit=4').then((data) =>
+      leaderboardPageSchema.parse(data),
     ),
     authenticatedData('/api/matches?limit=3').then((data) =>
       matchPageSchema.parse(data),
@@ -25,14 +21,8 @@ export default async function DashboardPage() {
     authenticatedSummary(),
   ]);
 
-  const topScorer = topRunsPage.data[0];
-  const topWicketTaker = topWicketsPage.data[0];
+  const topPlayers = leaderboardPage.data;
   const matches = matchPage.data;
-
-  const topScorerScore = topScorer ? calculateImpactScore(topScorer) : null;
-  const topWicketScore = topWicketTaker
-    ? calculateImpactScore(topWicketTaker)
-    : null;
 
   return (
     <>
@@ -84,96 +74,72 @@ export default async function DashboardPage() {
               Full leaderboard <ArrowUpRight size={16} />
             </Link>
           </div>
-          {topScorer || topWicketTaker ? (
-            <div className="top-performers-list">
-              {topScorer && (
-                <article className="performer-row">
-                  <div className="performer-header">
-                    <div className="featured-badges">
-                      <span className="discipline-badge discipline-batting">
-                        Top Run Scorer
-                      </span>
-                      <span className="role-tag">{topScorer.role}</span>
-                      {topScorer.teamName ? (
-                        <span className="team-pill">{topScorer.teamName}</span>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="performer-body">
-                    <div className="performer-main">
-                      <h3 className="performer-name">{topScorer.name}</h3>
-                      <div className="performer-meta">
-                        <span>{topScorer.matchesPlayed} matches</span>
-                        <span className="meta-bullet">·</span>
-                        <span>{topScorer.totalWickets} wickets</span>
-                        {topScorerScore && (
-                          <>
-                            <span className="meta-bullet">·</span>
-                            <span className="performer-impact">
-                              Impact {numberFormat.format(topScorerScore.total)}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="performer-stat-badge stat-batting">
-                      <span className="stat-badge-num">
-                        {numberFormat.format(topScorer.totalRuns)}
-                      </span>
-                      <span className="stat-badge-unit">runs</span>
-                    </div>
-                  </div>
-                </article>
-              )}
-
-              {topWicketTaker && (
-                <article className="performer-row">
-                  <div className="performer-header">
-                    <div className="featured-badges">
-                      <span className="discipline-badge discipline-bowling">
-                        Top Wicket Taker
-                      </span>
-                      <span className="role-tag">{topWicketTaker.role}</span>
-                      {topWicketTaker.teamName ? (
-                        <span className="team-pill">
-                          {topWicketTaker.teamName}
+          {topPlayers.length ? (
+            <div className="table-scroll">
+              <table className="mini-leaderboard-table">
+                <caption className="sr-only">
+                  Top players ranked by Impact Score
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Rank</th>
+                    <th scope="col">Player</th>
+                    <th scope="col" className="numeric">
+                      Runs
+                    </th>
+                    <th scope="col" className="numeric">
+                      Wickets
+                    </th>
+                    <th scope="col" className="numeric">
+                      Impact
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topPlayers.map((player, idx) => (
+                    <tr key={player.id}>
+                      <td>
+                        <span
+                          className={`rank${idx === 0 ? ' rank-first' : ''}`}
+                        >
+                          {String(idx + 1).padStart(2, '0')}
                         </span>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="performer-body">
-                    <div className="performer-main">
-                      <h3 className="performer-name">{topWicketTaker.name}</h3>
-                      <div className="performer-meta">
-                        <span>{topWicketTaker.matchesPlayed} matches</span>
-                        <span className="meta-bullet">·</span>
-                        <span>
-                          {numberFormat.format(topWicketTaker.totalRuns)} runs
-                        </span>
-                        {topWicketScore && (
-                          <>
-                            <span className="meta-bullet">·</span>
-                            <span className="performer-impact">
-                              Impact {numberFormat.format(topWicketScore.total)}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    <div className="performer-stat-badge stat-bowling">
-                      <span className="stat-badge-num">
-                        {topWicketTaker.totalWickets}
-                      </span>
-                      <span className="stat-badge-unit">wickets</span>
-                    </div>
-                  </div>
-                </article>
-              )}
+                      </td>
+                      <td>
+                        <div className="mini-player-cell">
+                          <span className="mini-player-name">
+                            {player.name}
+                          </span>
+                          <div className="mini-player-meta">
+                            <span className="mini-role-tag">{player.role}</span>
+                            {player.teamName ? (
+                              <span className="mini-team-name">
+                                {player.teamName}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="numeric font-tabular">
+                        {numberFormat.format(player.totalRuns)}
+                      </td>
+                      <td className="numeric font-tabular">
+                        {player.totalWickets}
+                      </td>
+                      <td className="numeric">
+                        <strong className="mini-impact-score">
+                          {numberFormat.format(player.score.total)}
+                        </strong>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
             <EmptyState
               title="Your first player starts the story."
-              description="Add your squad to see top run scorers and wicket takers."
+              description="Add your squad to see top performances on the leaderboard."
               href="/dashboard/players/new"
               action="Add a player"
             />
