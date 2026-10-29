@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { authenticatedData } from '@/lib/backend';
+import { authenticatedPlayers, authenticatedTeams } from '@/lib/backend';
 import { playerPageSchema } from '@/lib/contracts';
 import { PageHeading } from '@/components/page-heading';
 import { EmptyState } from '@/components/empty-state';
@@ -8,13 +8,8 @@ import { PlayersTable } from '@/components/players-table';
 import { ListTransition } from '@/components/list-transition';
 import { Pagination } from '@/components/pagination';
 import { PlayerFilters } from '@/components/player-filters';
-import {
-  playerPageQuery,
-  listQueryString,
-  normalizePage,
-} from '@/lib/list-page';
+import { playerPageQuery, normalizePage } from '@/lib/list-page';
 import type { SearchParams } from '@/lib/pagination';
-import { authenticatedTeams } from '@/lib/backend';
 export const metadata = { title: 'Players' };
 export default async function PlayersPage({
   searchParams,
@@ -22,10 +17,11 @@ export default async function PlayersPage({
   searchParams: Promise<SearchParams>;
 }) {
   const query = playerPageQuery(await searchParams, '/dashboard/players');
-  const result = playerPageSchema.parse(
-    await authenticatedData('/api/players?' + listQueryString(query)),
-  );
-  const teams = await authenticatedTeams();
+  const [playerData, teams] = await Promise.all([
+    authenticatedPlayers(query),
+    authenticatedTeams(),
+  ]);
+  const result = playerPageSchema.parse(playerData);
   normalizePage('/dashboard/players', query, result.meta.page);
   return (
     <ListTransition>

@@ -31,6 +31,7 @@ export function DashboardNav() {
           <Link
             key={href}
             href={href}
+            prefetch={false}
             aria-current={active ? 'page' : undefined}
             className={active ? 'active' : ''}
           >

@@ -1,33 +1,19 @@
 import Link from 'next/link';
 import { Plus, ArrowUpRight } from 'lucide-react';
-import { authenticatedData, authenticatedSummary } from '@/lib/backend';
-import {
-  playerPageSchema,
-  matchPageSchema,
-  numberFormat,
-} from '@/lib/contracts';
+import { authenticatedDashboard } from '@/lib/backend';
+import { numberFormat } from '@/lib/contracts';
 import { PageHeading } from '@/components/page-heading';
 import { EmptyState } from '@/components/empty-state';
 import { MatchList } from '@/components/match-list';
 import { TopPerformersTables } from '@/components/top-performers-tables';
 
 export default async function DashboardPage() {
-  const [topRunsPage, topWicketsPage, matchPage, summary] = await Promise.all([
-    authenticatedData('/api/players?sort=runs&direction=desc&limit=4').then(
-      (data) => playerPageSchema.parse(data),
-    ),
-    authenticatedData('/api/players?sort=wickets&direction=desc&limit=4').then(
-      (data) => playerPageSchema.parse(data),
-    ),
-    authenticatedData('/api/matches?limit=3').then((data) =>
-      matchPageSchema.parse(data),
-    ),
-    authenticatedSummary(),
-  ]);
-
-  const batters = topRunsPage.data;
-  const bowlers = topWicketsPage.data;
-  const matches = matchPage.data;
+  const dashboard = await authenticatedDashboard();
+  const {
+    topRunScorers: batters,
+    topWicketTakers: bowlers,
+    recentMatches: matches,
+  } = dashboard;
 
   return (
     <>
@@ -35,7 +21,11 @@ export default async function DashboardPage() {
         title="Your clubhouse."
         description="Your teams, matches, and player performances."
         action={
-          <Link href="/dashboard/matches/new" className="button button-primary">
+          <Link
+            href="/dashboard/matches/new"
+            prefetch={false}
+            className="button button-primary"
+          >
             <Plus size={18} />
             Record a match
           </Link>
@@ -44,29 +34,29 @@ export default async function DashboardPage() {
       <section className="summary-row" aria-label="Clubhouse overview">
         <div>
           <span>Players in your roster</span>
-          <strong>{summary.totalPlayers.toString().padStart(2, '0')}</strong>
-          <Link href="/dashboard/players">
+          <strong>{dashboard.totalPlayers.toString().padStart(2, '0')}</strong>
+          <Link href="/dashboard/players" prefetch={false}>
             Manage squad <ArrowUpRight size={15} />
           </Link>
         </div>
         <div>
           <span>Teams in your club</span>
-          <strong>{summary.totalTeams.toString().padStart(2, '0')}</strong>
-          <Link href="/dashboard/teams">
+          <strong>{dashboard.totalTeams.toString().padStart(2, '0')}</strong>
+          <Link href="/dashboard/teams" prefetch={false}>
             View teams <ArrowUpRight size={15} />
           </Link>
         </div>
         <div>
           <span>Matches recorded</span>
-          <strong>{summary.totalMatches.toString().padStart(2, '0')}</strong>
-          <Link href="/dashboard/matches">
+          <strong>{dashboard.totalMatches.toString().padStart(2, '0')}</strong>
+          <Link href="/dashboard/matches" prefetch={false}>
             Open matchbook <ArrowUpRight size={15} />
           </Link>
         </div>
         <div>
           <span>Career runs across roster</span>
-          <strong>{numberFormat.format(summary.totalRuns)}</strong>
-          <Link href="/dashboard/leaderboard">
+          <strong>{numberFormat.format(dashboard.totalRuns)}</strong>
+          <Link href="/dashboard/leaderboard" prefetch={false}>
             Standings <ArrowUpRight size={15} />
           </Link>
         </div>
@@ -75,7 +65,7 @@ export default async function DashboardPage() {
         <section className="section-panel">
           <div className="section-heading">
             <h2>Top performances</h2>
-            <Link href="/dashboard/leaderboard">
+            <Link href="/dashboard/leaderboard" prefetch={false}>
               Full leaderboard <ArrowUpRight size={16} />
             </Link>
           </div>
@@ -84,7 +74,7 @@ export default async function DashboardPage() {
         <section className="section-panel">
           <div className="section-heading">
             <h2>Recent matches</h2>
-            <Link href="/dashboard/matches">
+            <Link href="/dashboard/matches" prefetch={false}>
               View all <ArrowUpRight size={16} />
             </Link>
           </div>

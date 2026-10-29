@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getAuthUser } from '@/lib/session';
-import { getLeaderboard } from '@/lib/services';
+import { getLeaderboard } from '@/lib/services/players';
 import { playerListQuerySchema, urlQuery } from '@/lib/pagination';
 import { apiError } from '@/lib/http';
 

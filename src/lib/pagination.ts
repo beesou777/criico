@@ -10,10 +10,13 @@ const positiveInteger = (fallback: number, maximum: number) =>
           : value,
     z.number().int().min(1).max(maximum),
   );
+
 export const paginationQuerySchema = z.object({
   page: positiveInteger(1, 1_000_000),
   limit: positiveInteger(20, 100),
 });
+
+
 export const playerListQuerySchema = paginationQuerySchema
   .extend({
     search: z.string().trim().max(80).default(''),
@@ -35,10 +38,12 @@ export const playerListQuerySchema = paginationQuerySchema
     direction: z.enum(['asc', 'desc']).optional(),
   })
   .strict();
+
 export const matchListQuerySchema = paginationQuerySchema.strict();
 export type PaginationInput = z.infer<typeof paginationQuerySchema>;
 export type PlayerListQuery = z.infer<typeof playerListQuerySchema>;
 export type SearchParams = Record<string, string | string[] | undefined>;
+
 export const paginationMetaSchema = z.object({
   page: z.number().int().positive(),
   limit: z.number().int().positive(),
@@ -50,10 +55,12 @@ export const paginationMetaSchema = z.object({
   previousPage: z.number().int().positive().nullable(),
 });
 export type PaginationMeta = z.infer<typeof paginationMetaSchema>;
+
 export interface Paginated<T> {
   data: T[];
   meta: PaginationMeta;
 }
+
 export function paginationMeta(
   totalItems: number,
   input: PaginationInput,
@@ -73,6 +80,7 @@ export function paginationMeta(
     previousPage: hasPreviousPage ? page - 1 : null,
   };
 }
+
 export function urlQuery(
   searchParams: URLSearchParams,
 ): Record<string, unknown> {
@@ -83,6 +91,7 @@ export function urlQuery(
     }),
   );
 }
+
 export function pageHref(
   pathname: string,
   query: URLSearchParams,
@@ -94,6 +103,7 @@ export function pageHref(
   if (limit !== undefined) next.set('limit', String(limit));
   return `${pathname}?${next.toString()}`;
 }
+
 export function pageNumbers(
   page: number,
   totalPages: number,

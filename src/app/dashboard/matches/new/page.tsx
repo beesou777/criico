@@ -6,8 +6,10 @@ import { MatchForm } from '@/components/match-form';
 export const metadata = { title: 'Record match' };
 
 export default async function NewMatchPage() {
-  const players = await authenticatedPlayerOptions();
-  const teams = await authenticatedTeams();
+  const [players, teams] = await Promise.all([
+    authenticatedPlayerOptions(),
+    authenticatedTeams(),
+  ]);
 
   return (
     <>

@@ -1,4 +1,4 @@
-import { authenticatedData, authenticatedTeams } from '@/lib/backend';
+import { authenticatedLeaderboard, authenticatedTeams } from '@/lib/backend';
 import { leaderboardPageSchema, numberFormat } from '@/lib/contracts';
 import { Pagination } from '@/components/pagination';
 import { PlayerFilters } from '@/components/player-filters';
@@ -21,10 +21,11 @@ export default async function LeaderboardPage({
 }) {
   // Initial leaderboard data is deliberately fetched in this Server Component.
   const query = playerPageQuery(await searchParams, '/dashboard/leaderboard');
-  const result = leaderboardPageSchema.parse(
-    await authenticatedData('/api/leaderboard?' + listQueryString(query)),
-  );
-  const teams = await authenticatedTeams();
+  const [leaderboardData, teams] = await Promise.all([
+    authenticatedLeaderboard(query),
+    authenticatedTeams(),
+  ]);
+  const result = leaderboardPageSchema.parse(leaderboardData);
   const players = result.data;
   normalizePage('/dashboard/leaderboard', query, result.meta.page);
   const offset = (result.meta.page - 1) * result.meta.limit;

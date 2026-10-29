@@ -42,6 +42,23 @@ async function runMigration() {
 
     await client.query(`
       CREATE INDEX IF NOT EXISTS players_owner ON players ("ownerId");
+      CREATE INDEX IF NOT EXISTS players_owner_name_idx
+        ON players ("ownerId", (lower(name) COLLATE "C"), id);
+      CREATE INDEX IF NOT EXISTS players_owner_runs_idx
+        ON players ("ownerId", "totalRuns" DESC, (lower(name) COLLATE "C"), id);
+      CREATE INDEX IF NOT EXISTS players_owner_wickets_idx
+        ON players ("ownerId", "totalWickets" DESC, (lower(name) COLLATE "C"), id);
+      CREATE INDEX IF NOT EXISTS players_owner_impact_desc_idx
+        ON players (
+          "ownerId",
+          (
+            "totalRuns"::bigint * CASE WHEN role = 'Batsman' THEN 156 ELSE 120 END +
+            "totalWickets"::bigint * CASE WHEN role = 'Bowler' THEN 3000 ELSE 2000 END +
+            CASE WHEN "matchesPlayed" < 5 THEN -5000 WHEN "matchesPlayed" > 20 THEN 10000 ELSE 0 END +
+            CASE WHEN role = 'Wicketkeeper' THEN 3000 ELSE 0 END
+          ) DESC,
+          (lower(name) COLLATE "C"), id
+        );
     `);
 
     await client.query(`
@@ -54,6 +71,7 @@ async function runMigration() {
       );
       ALTER TABLE players ADD COLUMN IF NOT EXISTS "teamId" uuid REFERENCES teams(id) ON DELETE SET NULL;
       CREATE INDEX IF NOT EXISTS players_team ON players ("teamId");
+      CREATE INDEX IF NOT EXISTS players_owner_team_idx ON players ("ownerId", "teamId");
     `);
 
     await client.query(`
@@ -112,6 +130,8 @@ async function runMigration() {
 
     await client.query(`
       CREATE INDEX IF NOT EXISTS matches_owner ON matches ("ownerId");
+      CREATE INDEX IF NOT EXISTS matches_owner_played_at_idx
+        ON matches ("ownerId", "playedAt" DESC, "createdAt" DESC, id DESC);
     `);
 
     await client.query(`
@@ -124,6 +144,11 @@ async function runMigration() {
         wickets integer NOT NULL CHECK (wickets BETWEEN 0 AND 10000000),
         UNIQUE ("matchId", "playerId")
       );
+    `);
+
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS performances_player_idx
+        ON performances ("playerId");
     `);
 
     console.log('All tables created successfully!');
