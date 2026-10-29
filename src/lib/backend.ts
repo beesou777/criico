@@ -9,6 +9,7 @@ import {
   getPlayerOptions,
   getDashboardSummary,
   getTeams,
+  getMatchById,
 } from './services';
 import {
   playerListQuerySchema,
@@ -59,6 +60,11 @@ export async function authenticatedTeams() {
   const user = await getSessionUser();
   if (!user) redirect('/login');
   return getTeams(user.id);
+}
+export async function authenticatedMatch(id: string) {
+  const user = await getSessionUser();
+  if (!user) redirect('/login');
+  return getMatchById(user.id, id);
 }
 export async function authenticatedSummary() {
   const user = await getSessionUser();

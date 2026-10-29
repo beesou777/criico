@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { MatchForm } from '../src/components/match-form';
 import type { PlayerOption, Team } from '../src/lib/contracts';
@@ -250,7 +250,17 @@ describe('MatchForm UI & Validation Tests', () => {
   });
 
   it('submits valid match figures and calls submitJSON with expected payload', async () => {
-    mocks.submitJSON.mockResolvedValueOnce({ match: { id: 'm-1' } });
+    const savedMatchId = '88888888-8888-4888-8888-888888888888';
+    mocks.submitJSON.mockResolvedValueOnce({
+      match: {
+        id: savedMatchId,
+        teamA: 'Janakpur Bolts',
+        teamB: 'Sudurpaschim Royals',
+        result: 'A',
+        playedAt: '2026-10-29',
+      },
+      replayed: false,
+    });
 
     render(<MatchForm teams={mockTeams} players={mockPlayers} />);
 
@@ -283,7 +293,11 @@ describe('MatchForm UI & Validation Tests', () => {
     expect(mocks.submitJSON).toHaveBeenCalledTimes(1);
     const call = mocks.submitJSON.mock.calls[0];
     expect(call).toBeDefined();
-    const [url, method, payload] = call as [string, string, { teamA: string; teamB: string; performances: unknown[] }];
+    const [url, method, payload] = call as [
+      string,
+      string,
+      { teamA: string; teamB: string; performances: unknown[] },
+    ];
     expect(url).toBe('/api/matches');
     expect(method).toBe('POST');
     expect(payload.teamA).toBe('Janakpur Bolts');
@@ -302,5 +316,10 @@ describe('MatchForm UI & Validation Tests', () => {
         wickets: 2,
       },
     ]);
+    await waitFor(() =>
+      expect(mocks.push).toHaveBeenCalledWith(
+        `/dashboard/matches/${savedMatchId}`,
+      ),
+    );
   });
 });

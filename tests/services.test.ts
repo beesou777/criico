@@ -8,6 +8,7 @@ import {
   recordMatch,
   getDashboardSummary,
   getTeams,
+  getMatchById,
 } from '../src/lib/services';
 const mocks = vi.hoisted(() => ({
   query: vi.fn(),
@@ -38,6 +39,83 @@ const input = {
   expectedUpdatedAt: version,
 };
 describe('Transactional service regressions', () => {
+  it('loads match details and groups saved performances by side', async () => {
+    mocks.query
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: ownerId,
+            teamA: 'Lions',
+            teamB: 'Yaks',
+            result: 'B',
+            playedAt: '2025-01-02',
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            teamSide: 'A',
+            playerId: 'player-a',
+            playerName: 'Asha',
+            role: 'Batsman',
+            runs: 42,
+            wickets: 0,
+          },
+          {
+            teamSide: 'B',
+            playerId: 'player-b',
+            playerName: 'Bikash',
+            role: 'Bowler',
+            runs: 3,
+            wickets: 2,
+          },
+        ],
+      });
+
+    await expect(getMatchById(ownerId, ownerId)).resolves.toMatchObject({
+      id: ownerId,
+      teamA: 'Lions',
+      teamB: 'Yaks',
+      result: 'B',
+      playedAt: '2025-01-02',
+      teamAPerformances: [{ playerId: 'player-a', runs: 42, wickets: 0 }],
+      teamBPerformances: [{ playerId: 'player-b', runs: 3, wickets: 2 }],
+    });
+    expect(mocks.query).toHaveBeenCalledTimes(2);
+    expect(mocks.query.mock.calls[0]?.[0]).toContain(
+      'WHERE id = $1 AND "ownerId" = $2',
+    );
+    expect(mocks.query.mock.calls[1]?.[0]).toContain('matches."ownerId" = $2');
+  });
+
+  it('returns an authorized match with empty performance groups when no figures exist', async () => {
+    mocks.query
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            id: ownerId,
+            teamA: 'Lions',
+            teamB: 'Yaks',
+            result: 'TIE',
+            playedAt: '2025-01-02',
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] });
+    await expect(getMatchById(ownerId, ownerId)).resolves.toMatchObject({
+      result: 'TIE',
+      teamAPerformances: [],
+      teamBPerformances: [],
+    });
+  });
+
+  it('returns not found without querying performances for another owner’s match', async () => {
+    mocks.query.mockResolvedValueOnce({ rows: [] });
+    await expect(getMatchById(ownerId, ownerId)).resolves.toBeNull();
+    expect(mocks.query).toHaveBeenCalledOnce();
+  });
+
   it('loads owner-scoped teams with grouped actual player counts', async () => {
     mocks.query.mockResolvedValueOnce({
       rows: [

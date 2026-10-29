@@ -66,6 +66,19 @@ export interface MatchRecord {
   submissionKey?: string;
 }
 
+export interface MatchPerformanceRecord {
+  playerId: string;
+  playerName: string;
+  role: PlayerRecord['role'];
+  runs: number;
+  wickets: number;
+}
+
+export interface MatchDetailsRecord extends MatchRecord {
+  teamAPerformances: MatchPerformanceRecord[];
+  teamBPerformances: MatchPerformanceRecord[];
+}
+
 function isUniqueViolation(err: unknown): boolean {
   return (
     typeof err === 'object' &&
@@ -514,6 +527,52 @@ export async function getMatches(
     input,
   );
   return { data: result.rows.map(formatMatchRow), meta: result.meta };
+}
+
+export async function getMatchById(
+  ownerId: string,
+  id: string,
+): Promise<MatchDetailsRecord | null> {
+  const matchResult = await query(
+    `SELECT id, "teamA", "teamB", result, "playedAt"::text AS "playedAt"
+     FROM matches
+     WHERE id = $1 AND "ownerId" = $2`,
+    [id, ownerId],
+  );
+  const matchRow = matchResult.rows[0];
+  if (!matchRow) return null;
+
+  const performanceResult = await query(
+    `SELECT performances."teamSide", performances."playerId", players.name AS "playerName",
+            players.role, performances.runs, performances.wickets
+     FROM performances
+     JOIN matches ON matches.id = performances."matchId"
+     JOIN players ON players.id = performances."playerId"
+     WHERE performances."matchId" = $1
+       AND matches."ownerId" = $2
+       AND players."ownerId" = $2
+     ORDER BY performances."teamSide", lower(players.name) COLLATE "C", players.id`,
+    [id, ownerId],
+  );
+  const details = formatMatchRow(matchRow);
+  const teamAPerformances: MatchPerformanceRecord[] = [];
+  const teamBPerformances: MatchPerformanceRecord[] = [];
+  for (const row of performanceResult.rows) {
+    const performance: MatchPerformanceRecord = {
+      playerId: String(row.playerId),
+      playerName: String(row.playerName),
+      role: row.role as PlayerRecord['role'],
+      runs: Number(row.runs),
+      wickets: Number(row.wickets),
+    };
+    if (row.teamSide === 'A') teamAPerformances.push(performance);
+    if (row.teamSide === 'B') teamBPerformances.push(performance);
+  }
+  return {
+    ...details,
+    teamAPerformances,
+    teamBPerformances,
+  };
 }
 
 export interface DashboardSummary {

@@ -2,18 +2,22 @@ import Link from 'next/link';
 import { Plus, ArrowUpRight } from 'lucide-react';
 import { authenticatedData, authenticatedSummary } from '@/lib/backend';
 import {
-  leaderboardPageSchema,
+  playerPageSchema,
   matchPageSchema,
   numberFormat,
 } from '@/lib/contracts';
 import { PageHeading } from '@/components/page-heading';
 import { EmptyState } from '@/components/empty-state';
 import { MatchList } from '@/components/match-list';
+import { TopPerformersTables } from '@/components/top-performers-tables';
 
 export default async function DashboardPage() {
-  const [leaderboardPage, matchPage, summary] = await Promise.all([
-    authenticatedData('/api/leaderboard?limit=4').then((data) =>
-      leaderboardPageSchema.parse(data),
+  const [topRunsPage, topWicketsPage, matchPage, summary] = await Promise.all([
+    authenticatedData('/api/players?sort=runs&direction=desc&limit=4').then(
+      (data) => playerPageSchema.parse(data),
+    ),
+    authenticatedData('/api/players?sort=wickets&direction=desc&limit=4').then(
+      (data) => playerPageSchema.parse(data),
     ),
     authenticatedData('/api/matches?limit=3').then((data) =>
       matchPageSchema.parse(data),
@@ -21,7 +25,8 @@ export default async function DashboardPage() {
     authenticatedSummary(),
   ]);
 
-  const topPlayers = leaderboardPage.data;
+  const batters = topRunsPage.data;
+  const bowlers = topWicketsPage.data;
   const matches = matchPage.data;
 
   return (
@@ -74,76 +79,7 @@ export default async function DashboardPage() {
               Full leaderboard <ArrowUpRight size={16} />
             </Link>
           </div>
-          {topPlayers.length ? (
-            <div className="table-scroll">
-              <table className="mini-leaderboard-table">
-                <caption className="sr-only">
-                  Top players ranked by Impact Score
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Rank</th>
-                    <th scope="col">Player</th>
-                    <th scope="col" className="numeric">
-                      Runs
-                    </th>
-                    <th scope="col" className="numeric">
-                      Wickets
-                    </th>
-                    <th scope="col" className="numeric">
-                      Impact
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {topPlayers.map((player, idx) => (
-                    <tr key={player.id}>
-                      <td>
-                        <span
-                          className={`rank${idx === 0 ? ' rank-first' : ''}`}
-                        >
-                          {String(idx + 1).padStart(2, '0')}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="mini-player-cell">
-                          <span className="mini-player-name">
-                            {player.name}
-                          </span>
-                          <div className="mini-player-meta">
-                            <span className="mini-role-tag">{player.role}</span>
-                            {player.teamName ? (
-                              <span className="mini-team-name">
-                                {player.teamName}
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="numeric font-tabular">
-                        {numberFormat.format(player.totalRuns)}
-                      </td>
-                      <td className="numeric font-tabular">
-                        {player.totalWickets}
-                      </td>
-                      <td className="numeric">
-                        <strong className="mini-impact-score">
-                          {numberFormat.format(player.score.total)}
-                        </strong>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <EmptyState
-              title="Your first player starts the story."
-              description="Add your squad to see top performances on the leaderboard."
-              href="/dashboard/players/new"
-              action="Add a player"
-            />
-          )}
+          <TopPerformersTables batters={batters} bowlers={bowlers} />
         </section>
         <section className="section-panel">
           <div className="section-heading">

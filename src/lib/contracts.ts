@@ -45,6 +45,10 @@ export const matchPageSchema = z.object({
   data: z.array(cricketMatchSchema),
   meta: paginationMetaSchema,
 });
+export const matchSubmissionSchema = z.object({
+  match: cricketMatchSchema,
+  replayed: z.boolean(),
+});
 export type PlayerOption = Pick<
   z.infer<typeof playerSchema>,
   'id' | 'name' | 'role' | 'teamId' | 'teamName'

@@ -8,7 +8,7 @@ export function MatchList({ matches }: { matches: CricketMatch[] }) {
       {matches.map((match) => (
         <article key={match.id} className="match-item">
           <Link
-            href="/dashboard/matches"
+            href={`/dashboard/matches/${match.id}`}
             className="match-item-link"
             aria-label={`${match.teamA} versus ${match.teamB}, ${matchResult(match)}`}
           >
@@ -21,10 +21,7 @@ export function MatchList({ matches }: { matches: CricketMatch[] }) {
                   timeZone: 'Asia/Kathmandu',
                 }).format(new Date(`${match.playedAt.slice(0, 10)}T12:00:00Z`))}
               </span>
-              <span
-                className="match-outcome-badge"
-                data-outcome={match.result}
-              >
+              <span className="match-outcome-badge" data-outcome={match.result}>
                 {matchResult(match)}
               </span>
             </div>

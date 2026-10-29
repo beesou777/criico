@@ -15,7 +15,11 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { PlayerOption, Team } from '@/lib/contracts';
+import {
+  matchSubmissionSchema,
+  type PlayerOption,
+  type Team,
+} from '@/lib/contracts';
 import { submitJSON } from '@/lib/client-api';
 
 export function MatchForm({
@@ -170,11 +174,7 @@ export function MatchForm({
   };
 
   // Update stat values
-  const updateStat = (
-    id: string,
-    field: 'runs' | 'wickets',
-    value: string,
-  ) => {
+  const updateStat = (id: string, field: 'runs' | 'wickets', value: string) => {
     const parsed = value === '' ? '' : Number(value);
     setStats((prev) => ({
       ...prev,
@@ -272,7 +272,7 @@ export function MatchForm({
     setPending(true);
 
     try {
-      await submitJSON('/api/matches', 'POST', {
+      const response = await submitJSON('/api/matches', 'POST', {
         teamA,
         teamB,
         result,
@@ -280,12 +280,12 @@ export function MatchForm({
         submissionKey: key,
         performances,
       });
+      const saved = matchSubmissionSchema.parse(response);
 
       toast.success(
         'Match recorded. Career statistics and leaderboard updated.',
       );
-      router.push('/dashboard/matches');
-      router.refresh();
+      router.push(`/dashboard/matches/${saved.match.id}`);
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : 'Could not record match.';
@@ -488,10 +488,7 @@ export function MatchForm({
                           aria-label={`Runs scored by ${player.name}`}
                         />
                         {hasNegativeRuns && (
-                          <span
-                            className="inline-stat-error"
-                            role="alert"
-                          >
+                          <span className="inline-stat-error" role="alert">
                             Must be ≥ 0
                           </span>
                         )}
@@ -519,10 +516,7 @@ export function MatchForm({
                           aria-label={`Wickets taken by ${player.name}`}
                         />
                         {hasNegativeWickets && (
-                          <span
-                            className="inline-stat-error"
-                            role="alert"
-                          >
+                          <span className="inline-stat-error" role="alert">
                             Must be ≥ 0
                           </span>
                         )}
@@ -666,12 +660,8 @@ export function MatchForm({
               }}
               className="result-select"
             >
-              <option value="A">
-                {teamA ? `${teamA} won` : 'Team A won'}
-              </option>
-              <option value="B">
-                {teamB ? `${teamB} won` : 'Team B won'}
-              </option>
+              <option value="A">{teamA ? `${teamA} won` : 'Team A won'}</option>
+              <option value="B">{teamB ? `${teamB} won` : 'Team B won'}</option>
               <option value="TIE">Match tied</option>
               <option value="NO_RESULT">No result</option>
             </select>
