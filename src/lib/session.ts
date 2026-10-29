@@ -5,11 +5,16 @@ const ISSUER = 'criico-api';
 const AUDIENCE = 'criico-web';
 
 function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET || 'criico-super-secret-grassroots-jwt-key-32-chars';
+  const secret = process.env.JWT_SECRET;
+  if (!secret || secret.length < 32)
+    throw new Error('Configure JWT_SECRET with at least 32 random characters.');
   return new TextEncoder().encode(secret);
 }
 
-export async function signSession(user: { id: string; email: string }): Promise<string> {
+export async function signSession(user: {
+  id: string;
+  email: string;
+}): Promise<string> {
   const key = getJwtSecret();
   return await new SignJWT({ email: user.email })
     .setProtectedHeader({ alg: 'HS256' })
@@ -21,7 +26,9 @@ export async function signSession(user: { id: string; email: string }): Promise<
     .sign(key);
 }
 
-export async function verifySession(token: string | undefined): Promise<{ id: string; email: string } | null> {
+export async function verifySession(
+  token: string | undefined,
+): Promise<{ id: string; email: string } | null> {
   if (!token) return null;
   try {
     const key = getJwtSecret();
@@ -30,7 +37,13 @@ export async function verifySession(token: string | undefined): Promise<{ id: st
       issuer: ISSUER,
       audience: AUDIENCE,
     });
-    if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') {
+    if (
+      typeof payload.sub !== 'string' ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        payload.sub,
+      ) ||
+      typeof payload.email !== 'string'
+    ) {
       return null;
     }
     return { id: payload.sub, email: payload.email };
@@ -53,7 +66,10 @@ export function getSessionCookieOptions() {
  * Server Component / Server Action session helper.
  * Uses dynamic import so that importing session.ts in middleware.ts does not pull next/headers into Edge runtime.
  */
-export async function getSessionUser(): Promise<{ id: string; email: string } | null> {
+export async function getSessionUser(): Promise<{
+  id: string;
+  email: string;
+} | null> {
   try {
     const { cookies } = await import('next/headers');
     const cookieStore = await cookies();

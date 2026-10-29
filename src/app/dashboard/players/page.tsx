@@ -1,18 +1,34 @@
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { z } from 'zod';
 import { authenticatedData } from '@/lib/backend';
-import { playerSchema } from '@/lib/contracts';
+import { playerPageSchema } from '@/lib/contracts';
 import { PageHeading } from '@/components/page-heading';
 import { EmptyState } from '@/components/empty-state';
 import { PlayersTable } from '@/components/players-table';
+import { ListTransition } from '@/components/list-transition';
+import { Pagination } from '@/components/pagination';
+import { PlayerFilters } from '@/components/player-filters';
+import {
+  playerPageQuery,
+  listQueryString,
+  normalizePage,
+} from '@/lib/list-page';
+import type { SearchParams } from '@/lib/pagination';
+import { authenticatedTeams } from '@/lib/backend';
 export const metadata = { title: 'Players' };
-export default async function PlayersPage() {
-  const players = z
-    .array(playerSchema)
-    .parse(await authenticatedData('/api/players'));
+export default async function PlayersPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const query = playerPageQuery(await searchParams, '/dashboard/players');
+  const result = playerPageSchema.parse(
+    await authenticatedData('/api/players?' + listQueryString(query)),
+  );
+  const teams = await authenticatedTeams();
+  normalizePage('/dashboard/players', query, result.meta.page);
   return (
-    <>
+    <ListTransition>
       <PageHeading
         title="The squad."
         description="Every role has its place. Keep your players and career records together."
@@ -24,17 +40,40 @@ export default async function PlayersPage() {
         }
       />
       <section className="section-panel">
-        {players.length ? (
-          <PlayersTable players={players} />
+        <PlayerFilters
+          query={query}
+          pathname="/dashboard/players"
+          total={result.meta.totalItems}
+          teams={teams}
+        />
+        {result.meta.totalItems ? (
+          <PlayersTable players={result.data} />
         ) : (
           <EmptyState
-            title="Who’s first on the team sheet?"
-            description="Add your first player, including any existing career statistics."
-            href="/dashboard/players/new"
-            action="Add your first player"
+            title={
+              query.search || query.role
+                ? 'No players match those filters.'
+                : 'Who?s first on the team sheet?'
+            }
+            description={
+              query.search || query.role
+                ? 'Clear the filters or try a different name or role.'
+                : 'Add your first player, including any existing career statistics.'
+            }
+            href={
+              query.search || query.role
+                ? '/dashboard/players'
+                : '/dashboard/players/new'
+            }
+            action={
+              query.search || query.role
+                ? 'Clear filters'
+                : 'Add your first player'
+            }
           />
         )}
+        <Pagination meta={result.meta} />
       </section>
-    </>
+    </ListTransition>
   );
 }

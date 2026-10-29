@@ -1,53 +1,38 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getAuthUser } from '@/lib/session';
+import { getMatches, recordMatch } from '@/lib/services';
+import { matchListQuerySchema, urlQuery } from '@/lib/pagination';
+import { apiError, readJSON, requireSameOrigin } from '@/lib/http';
 import { matchSchema } from '@/lib/validation';
-import { getMatches, recordMatch, ServiceError } from '@/lib/services';
-
 export async function GET(request: NextRequest) {
-  const user = await getAuthUser(request);
-  if (!user) {
-    return NextResponse.json({ error: { message: 'Sign in to continue.' } }, { status: 401 });
-  }
-
   try {
-    const matches = await getMatches(user.id);
-    return NextResponse.json(matches);
-  } catch (error) {
-    console.error('Fetch matches error:', error);
-    return NextResponse.json(
-      { error: { message: 'Could not fetch matches.' } },
-      { status: 500 },
+    const user = await getAuthUser(request);
+    if (!user)
+      return NextResponse.json(
+        { error: { message: 'Sign in to continue.' } },
+        { status: 401 },
+      );
+    const input = matchListQuerySchema.parse(
+      urlQuery(request.nextUrl.searchParams),
     );
+    return NextResponse.json(await getMatches(user.id, input));
+  } catch (error) {
+    return apiError(error);
   }
 }
-
 export async function POST(request: NextRequest) {
-  const user = await getAuthUser(request);
-  if (!user) {
-    return NextResponse.json({ error: { message: 'Sign in to continue.' } }, { status: 401 });
-  }
-
   try {
-    const body = await request.json().catch(() => null);
-    const parsed = matchSchema.safeParse(body);
-    if (!parsed.success) {
+    requireSameOrigin(request);
+    const user = await getAuthUser(request);
+    if (!user)
       return NextResponse.json(
-        { error: { message: parsed.error.issues[0]?.message ?? 'Invalid match data.' } },
-        { status: 400 },
+        { error: { message: 'Sign in to continue.' } },
+        { status: 401 },
       );
-    }
-
-    const result = await recordMatch(user.id, parsed.data);
+    const input = matchSchema.parse(await readJSON(request));
+    const result = await recordMatch(user.id, input);
     return NextResponse.json(result, { status: result.replayed ? 200 : 201 });
   } catch (error) {
-    if (error instanceof ServiceError) {
-      return NextResponse.json({ error: { message: error.message } }, { status: error.status });
-    }
-    console.error('Record match error:', error);
-    return NextResponse.json(
-      { error: { message: 'Could not record match.' } },
-      { status: 500 },
-    );
+    return apiError(error);
   }
 }
-

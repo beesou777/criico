@@ -1,41 +1,9 @@
-'use client';
-import { useState } from 'react';
 import Link from 'next/link';
-import { Search, Pencil } from 'lucide-react';
-import { numberFormat, roles, type Player } from '@/lib/contracts';
+import { Pencil } from 'lucide-react';
+import { numberFormat, type Player } from '@/lib/contracts';
 export function PlayersTable({ players }: { players: Player[] }) {
-  const [query, setQuery] = useState('');
-  const [role, setRole] = useState('All roles');
-  const filtered = players.filter(
-    (p) =>
-      p.name.toLowerCase().includes(query.toLowerCase()) &&
-      (role === 'All roles' || role === p.role),
-  );
   return (
     <>
-      <div className="table-toolbar">
-        <label className="search-field">
-          <Search size={18} />
-          <span className="sr-only">Search players</span>
-          <input
-            placeholder="Find a player…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </label>
-        <label className="filter-field">
-          <span className="sr-only">Filter by role</span>
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option>All roles</option>
-            {roles.map((r) => (
-              <option key={r}>{r}</option>
-            ))}
-          </select>
-        </label>
-        <span className="result-count" aria-live="polite">
-          {filtered.length} players
-        </span>
-      </div>
       <div className="table-scroll">
         <table>
           <caption className="sr-only">
@@ -45,6 +13,7 @@ export function PlayersTable({ players }: { players: Player[] }) {
             <tr>
               <th>Player</th>
               <th>Role</th>
+              <th>Team</th>
               <th className="numeric">Matches</th>
               <th className="numeric">Runs</th>
               <th className="numeric">Wickets</th>
@@ -55,7 +24,7 @@ export function PlayersTable({ players }: { players: Player[] }) {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((p) => (
+            {players.map((p) => (
               <tr key={p.id}>
                 <td className="player-name">
                   <span className="avatar">
@@ -65,6 +34,9 @@ export function PlayersTable({ players }: { players: Player[] }) {
                 </td>
                 <td>
                   <span className="role-tag">{p.role}</span>
+                </td>
+                <td>
+                  {p.teamName ?? <span className="muted">Unassigned</span>}
                 </td>
                 <td className="numeric">{p.matchesPlayed}</td>
                 <td className="numeric">{numberFormat.format(p.totalRuns)}</td>
@@ -83,7 +55,7 @@ export function PlayersTable({ players }: { players: Player[] }) {
             ))}
           </tbody>
         </table>
-        {!filtered.length && (
+        {!players.length && (
           <div className="table-empty">
             No players match those filters. Try a different name or role.
           </div>

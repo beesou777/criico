@@ -1,4 +1,5 @@
 const { Client } = require('pg');
+const { databaseOptions } = require('./database-options.cjs');
 
 async function runMigration() {
   const connectionString = process.env.DATABASE_URL;
@@ -8,8 +9,7 @@ async function runMigration() {
   }
 
   const client = new Client({
-    connectionString,
-    ssl: { rejectUnauthorized: false }
+    ...databaseOptions(connectionString),
   });
 
   try {
@@ -45,9 +45,37 @@ async function runMigration() {
     `);
 
     await client.query(`
+      CREATE TABLE IF NOT EXISTS teams (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        "ownerId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        name varchar(80) NOT NULL,
+        "createdAt" timestamptz NOT NULL DEFAULT now(),
+        UNIQUE ("ownerId", name)
+      );
+      ALTER TABLE players ADD COLUMN IF NOT EXISTS "teamId" uuid REFERENCES teams(id) ON DELETE SET NULL;
+      CREATE INDEX IF NOT EXISTS players_team ON players ("teamId");
+    `);
+
+    await client.query(`
+      INSERT INTO teams ("ownerId", name)
+      SELECT DISTINCT "ownerId", 'Unassigned Team' FROM players
+      WHERE "teamId" IS NULL
+      ON CONFLICT ("ownerId", name) DO NOTHING;
+      UPDATE players
+      SET "teamId" = teams.id
+      FROM teams
+      WHERE players."ownerId" = teams."ownerId"
+        AND teams.name = 'Unassigned Team'
+        AND players."teamId" IS NULL;
+      ALTER TABLE players ALTER COLUMN "teamId" SET NOT NULL;
+    `);
+
+    await client.query(`
       CREATE TABLE IF NOT EXISTS matches (
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         "ownerId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        "teamAId" uuid REFERENCES teams(id),
+        "teamBId" uuid REFERENCES teams(id),
         "teamA" varchar(80) NOT NULL,
         "teamB" varchar(80) NOT NULL,
         result varchar(12) NOT NULL CHECK (result IN ('A','B','TIE','NO_RESULT')),
@@ -57,6 +85,29 @@ async function runMigration() {
         "createdAt" timestamptz NOT NULL DEFAULT now(),
         UNIQUE ("ownerId", "submissionKey")
       );
+    `);
+
+    await client.query(`
+      ALTER TABLE matches ADD COLUMN IF NOT EXISTS "teamAId" uuid REFERENCES teams(id);
+      ALTER TABLE matches ADD COLUMN IF NOT EXISTS "teamBId" uuid REFERENCES teams(id);
+      INSERT INTO teams ("ownerId", name)
+      SELECT "ownerId", "teamA" FROM matches
+      ON CONFLICT ("ownerId", name) DO NOTHING;
+      INSERT INTO teams ("ownerId", name)
+      SELECT "ownerId", "teamB" FROM matches
+      ON CONFLICT ("ownerId", name) DO NOTHING;
+      UPDATE matches
+      SET "teamAId" = teams.id
+      FROM teams
+      WHERE matches."ownerId" = teams."ownerId" AND matches."teamA" = teams.name AND matches."teamAId" IS NULL;
+      UPDATE matches
+      SET "teamBId" = teams.id
+      FROM teams
+      WHERE matches."ownerId" = teams."ownerId" AND matches."teamB" = teams.name AND matches."teamBId" IS NULL;
+      ALTER TABLE matches ALTER COLUMN "teamAId" SET NOT NULL;
+      ALTER TABLE matches ALTER COLUMN "teamBId" SET NOT NULL;
+      CREATE INDEX IF NOT EXISTS matches_team_a ON matches ("teamAId");
+      CREATE INDEX IF NOT EXISTS matches_team_b ON matches ("teamBId");
     `);
 
     await client.query(`
@@ -79,9 +130,15 @@ async function runMigration() {
     const res = await client.query(`
       SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';
     `);
-    console.log('Public tables in database:', res.rows.map(r => r.table_name));
+    console.log(
+      'Public tables in database:',
+      res.rows.map((r) => r.table_name),
+    );
   } catch (err) {
-    console.error('Migration failed:', err);
+    console.error(
+      'Migration failed:',
+      err instanceof Error ? err.name : 'UnknownError',
+    );
     process.exitCode = 1;
   } finally {
     await client.end();

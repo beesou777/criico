@@ -15,9 +15,7 @@ export default async function HomePage() {
           <a href="#clubhouse">The clubhouse</a>
           <a href="#how-it-works">How it works</a>
           <a href="#features">Features</a>
-          {user && (
-            <Link href="/dashboard">Dashboard</Link>
-          )}
+          {user && <Link href="/dashboard">Dashboard</Link>}
         </nav>
         <div className="header-actions">
           {user ? (
@@ -107,9 +105,6 @@ export default async function HomePage() {
                 />
               </g>
             </svg>
-            <div className="field-caption">
-              THE LOCAL GROUND. THE BIGGER PICTURE.
-            </div>
           </div>
         </section>
         <section

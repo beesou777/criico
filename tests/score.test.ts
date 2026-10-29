@@ -59,20 +59,23 @@ describe('Custom Impact Score Formula', () => {
   });
 
   it.each([
-    [4, -50],  // < 5 matches: -50 penalty
-    [5, 0],    // exactly 5 matches: no penalty or bonus
-    [20, 0],   // exactly 20 matches: no penalty or bonus
+    [4, -50], // < 5 matches: -50 penalty
+    [5, 0], // exactly 5 matches: no penalty or bonus
+    [20, 0], // exactly 20 matches: no penalty or bonus
     [21, 100], // > 20 matches: +100 veteran bonus
-  ])('handles the experience boundary at %i matches', (matchesPlayed, expected) => {
-    expect(
-      calculateImpactScore({
-        role: 'All-rounder',
-        matchesPlayed,
-        totalRuns: 0,
-        totalWickets: 0,
-      }).total,
-    ).toBe(expected);
-  });
+  ])(
+    'handles the experience boundary at %i matches',
+    (matchesPlayed, expected) => {
+      expect(
+        calculateImpactScore({
+          role: 'All-rounder',
+          matchesPlayed,
+          totalRuns: 0,
+          totalWickets: 0,
+        }).total,
+      ).toBe(expected);
+    },
+  );
 
   it('combines a veteran batting multiplier (runs * 1.2 * 1.3 = 1.56) with an exact fractional score', () => {
     // Batsman with 21 matches (> 20 -> +100), 101 runs, 2 wickets:
@@ -109,4 +112,3 @@ describe('Custom Impact Score Formula', () => {
     ).toThrow();
   });
 });
-

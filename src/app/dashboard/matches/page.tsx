@@ -1,18 +1,31 @@
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { z } from 'zod';
 import { authenticatedData } from '@/lib/backend';
-import { cricketMatchSchema } from '@/lib/contracts';
+import { matchPageSchema } from '@/lib/contracts';
 import { PageHeading } from '@/components/page-heading';
 import { EmptyState } from '@/components/empty-state';
 import { MatchList } from '@/components/match-list';
+import { ListTransition } from '@/components/list-transition';
+import { Pagination } from '@/components/pagination';
+import {
+  matchPageQuery,
+  listQueryString,
+  normalizePage,
+} from '@/lib/list-page';
+import type { SearchParams } from '@/lib/pagination';
 export const metadata = { title: 'Matchbook' };
-export default async function MatchesPage() {
-  const matches = z
-    .array(cricketMatchSchema)
-    .parse(await authenticatedData('/api/matches'));
+export default async function MatchesPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const query = matchPageQuery(await searchParams);
+  const result = matchPageSchema.parse(
+    await authenticatedData('/api/matches?' + listQueryString(query)),
+  );
+  normalizePage('/dashboard/matches', query, result.meta.page);
   return (
-    <>
+    <ListTransition>
       <PageHeading
         title="The matchbook."
         description="A record of the games your community played."
@@ -24,8 +37,8 @@ export default async function MatchesPage() {
         }
       />
       <section className="section-panel">
-        {matches.length ? (
-          <MatchList matches={matches} />
+        {result.data.length ? (
+          <MatchList matches={result.data} />
         ) : (
           <EmptyState
             title="Every match deserves a record."
@@ -34,7 +47,8 @@ export default async function MatchesPage() {
             action="Record your first match"
           />
         )}
+        <Pagination meta={result.meta} />
       </section>
-    </>
+    </ListTransition>
   );
 }

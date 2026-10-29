@@ -66,7 +66,8 @@ describe('Validation Boundaries', () => {
       totalWickets: 20,
     };
     expect(
-      playerSchema.safeParse({ ...player, ownerId: 'injected-user-id' }).success,
+      playerSchema.safeParse({ ...player, ownerId: 'injected-user-id' })
+        .success,
     ).toBe(false);
     expect(
       playerSchema.safeParse({ ...player, basePrice: 1.234 }).success,
@@ -103,4 +104,3 @@ describe('Validation Boundaries', () => {
     ).toBe('organizer@criico.com');
   });
 });
-

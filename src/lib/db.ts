@@ -1,4 +1,5 @@
 import { Pool, type QueryResult, type QueryResultRow } from 'pg';
+import { databaseOptions } from '../../scripts/database-options.cjs';
 
 declare global {
   var __dbPool: Pool | undefined;
@@ -11,8 +12,7 @@ export function getDb(): Pool {
       throw new Error('DATABASE_URL environment variable is not defined.');
     }
     global.__dbPool = new Pool({
-      connectionString,
-      ssl: { rejectUnauthorized: false },
+      ...databaseOptions(connectionString),
       max: 10,
       connectionTimeoutMillis: 5000,
     });

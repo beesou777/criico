@@ -1,25 +1,35 @@
 const { Client } = require('pg');
+const { databaseOptions } = require('./database-options.cjs');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
 async function seed() {
   const connectionString = process.env.DATABASE_URL;
+
   if (!connectionString) {
     console.error('DATABASE_URL is not set in environment.');
     process.exit(1);
   }
 
   const client = new Client({
-    connectionString,
-    ssl: { rejectUnauthorized: false },
+    ...databaseOptions(connectionString),
   });
 
   try {
     await client.connect();
     console.log('Connected to PostgreSQL database for seeding.');
 
-    const email = 'bishwa@yopmail.com';
-    const plainPassword = 'Test@123';
+    const email = process.env.SEED_EMAIL;
+    const plainPassword = process.env.SEED_PASSWORD;
+    if (
+      !email ||
+      !plainPassword ||
+      plainPassword.length < 8 ||
+      Buffer.byteLength(plainPassword, 'utf8') > 72
+    )
+      throw new Error(
+        'Set SEED_EMAIL and a valid SEED_PASSWORD (8 characters minimum, 72 UTF-8 bytes maximum).',
+      );
     const passwordHash = await bcrypt.hash(plainPassword, 12);
 
     // 1. Upsert Showcase User
@@ -35,21 +45,28 @@ async function seed() {
     const user = userRes.rows[0];
     console.log(`Showcase user ready: ${user.email} (${user.id})`);
 
-    // 2. Clean existing players/matches for this user to ensure idempotency
+    // 2. Clean existing demo data
+    // Use a transaction so failed seeding can be rolled back.
+    await client.query('BEGIN');
+
+    await client.query(
+      `DELETE FROM performances
+       WHERE "matchId" IN (
+         SELECT id FROM matches WHERE "ownerId" = $1
+       )`,
+      [user.id],
+    );
+
     await client.query(`DELETE FROM players WHERE "ownerId" = $1`, [user.id]);
+
+    await client.query(`DELETE FROM teams WHERE "ownerId" = $1`, [user.id]);
+
     await client.query(`DELETE FROM matches WHERE "ownerId" = $1`, [user.id]);
+
     console.log('Cleaned previous demo data for user.');
 
-    // 3. Insert NPL (Nepal Premier League) Players
-    // Roles: Batsman, Bowler, All-rounder, Wicketkeeper
-    // Demonstrates:
-    // - Veteran bonus (> 20 matches, +100 pts): Rohit, Dipendra, Sandeep, Aasif, Karan, Sompal, Kushal B.
-    // - Neutral experience (5-20 matches): Kushal M., Anil, Lalit, Gulshan, Bhim.
-    // - Rookie penalty (< 5 matches, -50 pts): Pratish, Rijan, Hemant.
-    // - Wicketkeeper bonus (+30 pts flat, no bowler multiplier): Aasif Sheikh, Anil Sah.
-    // - Bowler multiplier (* 1.5): Sandeep, Lalit, Pratish, Rijan, Hemant.
-    // - Batsman multiplier (* 1.3): Rohit, Kushal B., Bhim.
-    const nplPlayers = [
+    // 3. Original players
+    const originalPlayers = [
       {
         name: 'Dipendra Singh Airee',
         role: 'All-rounder',
@@ -172,22 +189,275 @@ async function seed() {
       },
     ];
 
+    // 4. Additional players from reported 2026 NPL squads.
+    // These are squad additions, not a claim that every player is
+    // confirmed in the final playing XI.
+    const additionalPlayers = [
+      // Biratnagar Kings
+      { name: 'Lokesh Bam', role: 'Wicketkeeper', basePrice: 1500000 },
+      { name: 'Basir Ahamad', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Narayan Joshi', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Subash Bhandari', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Naren Saud', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Pratik Shrestha', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Rupesh Kumar Singh', role: 'All-rounder', basePrice: 1500000 },
+      { name: 'Sujan Thapaliya', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Andre Russell', role: 'All-rounder', basePrice: 2500000 },
+      { name: 'Angelo Mathews', role: 'All-rounder', basePrice: 2500000 },
+      { name: 'Charith Asalanka', role: 'Batsman', basePrice: 2500000 },
+      { name: 'Shubham Ranjane', role: 'All-rounder', basePrice: 1500000 },
+      { name: 'Imran Sheikh', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Dilsad Ali', role: 'Wicketkeeper', basePrice: 1000000 },
+      { name: 'Aparajit Poudel', role: 'Batsman', basePrice: 1000000 },
+
+      // Chitwan Rhinos
+      { name: 'Deepak Bohara', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Dev Khanal', role: 'Batsman', basePrice: 1500000 },
+      { name: 'Arjun Saud', role: 'Wicketkeeper', basePrice: 1000000 },
+      { name: 'Bipin Rawal', role: 'Wicketkeeper', basePrice: 1000000 },
+      { name: 'Ravi Bopara', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Sikandar Raza', role: 'All-rounder', basePrice: 2500000 },
+      { name: 'Bibek Kumar Yadav', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Salahuddin Khan', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Kaleem Sana', role: 'Bowler', basePrice: 2000000 },
+      { name: 'Usama Mir', role: 'Bowler', basePrice: 2000000 },
+      { name: 'Ranjeet Kumar', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Kamal Singh Airee', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Mousam Dhakal', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Ashok Dhami', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Gautam KC', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Kamil Mishara', role: 'Wicketkeeper', basePrice: 2000000 },
+      { name: 'Hasan Ali', role: 'Bowler', basePrice: 2500000 },
+      { name: 'Mohammad Nawaz', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Dan Mousley', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Tom Taylor', role: 'All-rounder', basePrice: 2000000 },
+
+      // Janakpur Bolts
+      { name: 'Bikash Aagri', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Aaditya Mahata', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Bishal Patel', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Rit Gautam', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Santosh Karki', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Harmeet Singh', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Iftikhar Ahmed', role: 'All-rounder', basePrice: 2500000 },
+      { name: 'James Neesham', role: 'All-rounder', basePrice: 2500000 },
+      { name: 'Moeen Ali', role: 'All-rounder', basePrice: 2500000 },
+      { name: 'Mayan Yadav', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Trit Raj Das', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Abhishek Tiwari', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Amar Singh Rautela', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Ashutosh Pandey', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Bishal Shusling', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Kusal Perera', role: 'Wicketkeeper', basePrice: 2500000 },
+      { name: 'Hunain Shah', role: 'Bowler', basePrice: 1500000 },
+
+      // Kathmandu Gurkhas
+      { name: 'David Warner', role: 'Batsman', basePrice: 2500000 },
+      { name: 'KS Bharat', role: 'Wicketkeeper', basePrice: 2000000 },
+      { name: 'Sahil Patel', role: 'Wicketkeeper', basePrice: 1000000 },
+      { name: 'Suryanshu Koirala', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Sahan Arachchige', role: 'All-rounder', basePrice: 1500000 },
+      { name: 'Mohammad Aadil Alam', role: 'All-rounder', basePrice: 1500000 },
+      { name: 'Santosh Yadav', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Prasiddha Jaishi', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Dev Shah', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Rashid Khan', role: 'Bowler', basePrice: 2500000 },
+      { name: 'Krishna Paudel', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Shahab Alam', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Dayanand Mandal', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Sonu Devkota', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Will Bosisto', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Sam Heazlett', role: 'Batsman', basePrice: 2000000 },
+      { name: 'Smit Patel', role: 'Wicketkeeper', basePrice: 1500000 },
+
+      // Karnali Yaks
+      { name: 'Deepak Dumre', role: 'Wicketkeeper', basePrice: 1000000 },
+      { name: 'Ariful Islam', role: 'All-rounder', basePrice: 1500000 },
+      { name: 'David Miller', role: 'Batsman', basePrice: 2500000 },
+      { name: 'Sachin Sharma', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Mark Watt', role: 'Bowler', basePrice: 2000000 },
+      { name: 'Pawan Sarraf', role: 'All-rounder', basePrice: 1500000 },
+      { name: 'Unish Bikram Singh', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Shubh Kansakar', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Bipin Sharma', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Nandan Yadav', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Yuvraj Khatri', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Dipendra Rawat', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Surya Tamang', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Hussain Talat', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Akbar Ali', role: 'Wicketkeeper', basePrice: 2000000 },
+      { name: 'Diwan Pun', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Hikmat Shahi', role: 'Batsman', basePrice: 1000000 },
+
+      // Lumbini Lions
+      { name: 'Niroshan Dickwella', role: 'Wicketkeeper', basePrice: 2500000 },
+      { name: 'Sundeep Jora', role: 'Batsman', basePrice: 1500000 },
+      { name: 'Dilip Nath', role: 'Wicketkeeper', basePrice: 1000000 },
+      { name: 'Aakash Tripathi', role: 'Batsman', basePrice: 1000000 },
+      { name: "D'Arcy Short", role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Sher Malla', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Arniko Yadav', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Ruben Trumpelmann', role: 'Bowler', basePrice: 2000000 },
+      { name: 'Dinesh Adhikari', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Abhishesh Gautam', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Tilak Bhandari', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Kishore Mahato', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Durgesh Gupta', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Ajay Chauhan', role: 'Bowler', basePrice: 1000000 },
+      {
+        name: 'Shadley van Schalkwyk',
+        role: 'All-rounder',
+        basePrice: 2000000,
+      },
+      {
+        name: 'Shamim Hossain Patwari',
+        role: 'All-rounder',
+        basePrice: 2000000,
+      },
+
+      // Pokhara Avengers
+      { name: 'Dinesh Kharel', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Chamika Karunaratne', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Dhananjaya Lakshan', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Shakib Al Hasan', role: 'All-rounder', basePrice: 2500000 },
+      { name: 'Sunny BK', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Arjun Kumal', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Bipin Khatri', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Kiran Thagunna', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Arjun Gharti', role: 'Wicketkeeper', basePrice: 1000000 },
+      { name: 'Bipin Acharya', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Sagar Dhakal', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Aakash Chand', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Sudip Aryal', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Bibek Rana Magar', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Pratik Pokharel', role: 'Batsman', basePrice: 1000000 },
+
+      // Sudurpaschim Royals
+      { name: 'Binod Bhandari', role: 'Wicketkeeper', basePrice: 1500000 },
+      { name: 'Dipak Bohara', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Aarif Sheikh', role: 'All-rounder', basePrice: 1500000 },
+      { name: 'Abinash Bohara', role: 'Bowler', basePrice: 1500000 },
+      { name: 'Ishan Pandey', role: 'Batsman', basePrice: 1000000 },
+      { name: 'Tek Rawat', role: 'Wicketkeeper', basePrice: 1000000 },
+      { name: 'Ayub Chand', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Tek Raj Thalal', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Milan Bohara', role: 'Bowler', basePrice: 1000000 },
+      { name: 'Sachin Bhatt', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Brandon McMullen', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Scott Kuggeleijn', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Saif Zaib', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Sherfane Rutherford', role: 'Batsman', basePrice: 2500000 },
+      { name: 'Hikmat Mahara', role: 'All-rounder', basePrice: 1000000 },
+      { name: 'Fabian Allen', role: 'All-rounder', basePrice: 2000000 },
+      { name: 'Anil Kharel', role: 'Bowler', basePrice: 1000000 },
+    ];
+
+    // 5. Give new players placeholder statistics.
+    // Replace these with verified stats before using real rankings.
+    const originalNames = new Set(
+      originalPlayers.map((p) => p.name.toLowerCase()),
+    );
+
+    const newPlayers = additionalPlayers
+      .filter((p) => !originalNames.has(p.name.toLowerCase()))
+      .map((p) => ({
+        ...p,
+        matchesPlayed: 10,
+        totalRuns:
+          p.role === 'Batsman'
+            ? 300
+            : p.role === 'Wicketkeeper'
+              ? 220
+              : p.role === 'All-rounder'
+                ? 180
+                : 30,
+        totalWickets:
+          p.role === 'Bowler' ? 15 : p.role === 'All-rounder' ? 6 : 0,
+      }));
+
+    const nplPlayers = [...originalPlayers, ...newPlayers];
+
+    // Keep the showcase roster useful with the new team model. The original
+    // players belong to a national showcase squad; the imported NPL players
+    // are grouped in the same order as their source sections above.
+    const teamNames = [
+      'Nepal Showcase XI',
+      'Biratnagar Kings',
+      'Chitwan Rhinos',
+      'Janakpur Bolts',
+      'Kathmandu Gurkhas',
+      'Karnali Yaks',
+      'Lumbini Lions',
+      'Pokhara Avengers',
+      'Sudurpaschim Royals',
+    ];
+    originalPlayers.forEach((player) => {
+      player.teamName = 'Nepal Showcase XI';
+    });
+    const importedTeamRanges = [
+      [0, 15, 'Biratnagar Kings'],
+      [15, 35, 'Chitwan Rhinos'],
+      [35, 52, 'Janakpur Bolts'],
+      [52, 69, 'Kathmandu Gurkhas'],
+      [69, 86, 'Karnali Yaks'],
+      [86, 102, 'Lumbini Lions'],
+      [102, 117, 'Pokhara Avengers'],
+      [117, 134, 'Sudurpaschim Royals'],
+    ];
+    importedTeamRanges.forEach(([start, end, teamName]) => {
+      additionalPlayers.slice(start, end).forEach((player) => {
+        player.teamName = teamName;
+      });
+    });
+    const importedTeamByName = new Map(
+      additionalPlayers.map((player) => [player.name, player.teamName]),
+    );
+    nplPlayers.forEach((player) => {
+      player.teamName ??=
+        importedTeamByName.get(player.name) ?? 'Nepal Showcase XI';
+    });
+
+    const teamMap = new Map();
+    for (const name of teamNames) {
+      const teamRes = await client.query(
+        `INSERT INTO teams ("ownerId", name) VALUES ($1, $2)
+         ON CONFLICT ("ownerId", name) DO UPDATE SET name = EXCLUDED.name
+         RETURNING id, name`,
+        [user.id, name],
+      );
+      teamMap.set(name, teamRes.rows[0].id);
+    }
+
+    // 6. Insert Players
     const playerMap = new Map();
 
     for (const p of nplPlayers) {
       const res = await client.query(
-        `INSERT INTO players ("ownerId", name, role, "basePrice", "matchesPlayed", "totalRuns", "totalWickets")
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO players
+          ("ownerId", name, role, "basePrice", "matchesPlayed",
+           "totalRuns", "totalWickets", "teamId")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING id, name, role`,
-        [user.id, p.name, p.role, p.basePrice, p.matchesPlayed, p.totalRuns, p.totalWickets],
+        [
+          user.id,
+          p.name,
+          p.role,
+          p.basePrice,
+          p.matchesPlayed,
+          p.totalRuns,
+          p.totalWickets,
+          teamMap.get(p.teamName),
+        ],
       );
+
       const inserted = res.rows[0];
       playerMap.set(inserted.name, inserted.id);
     }
 
-    console.log(`Inserted ${nplPlayers.length} NPL players into squad.`);
+    console.log(`Inserted ${nplPlayers.length} players into squad.`);
 
-    // 4. Insert NPL Matches & Performances
+    // 7. Insert Matches & Performances
+    // These are the original demo matches, not the 2026 fixture list.
     const matches = [
       {
         teamA: 'Janakpur Bolts',
@@ -239,24 +509,46 @@ async function seed() {
 
     for (const m of matches) {
       const submissionKey = crypto.randomUUID();
+
       const payloadHash = crypto
         .createHash('sha256')
-        .update(JSON.stringify({ teamA: m.teamA, teamB: m.teamB, playedAt: m.playedAt }))
+        .update(
+          JSON.stringify({
+            teamA: m.teamA,
+            teamB: m.teamB,
+            playedAt: m.playedAt,
+          }),
+        )
         .digest('hex');
 
       const matchRes = await client.query(
-        `INSERT INTO matches ("ownerId", "teamA", "teamB", result, "playedAt", "submissionKey", "payloadHash")
-         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `INSERT INTO matches
+          ("ownerId", "teamAId", "teamBId", "teamA", "teamB", result, "playedAt",
+           "submissionKey", "payloadHash")
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING id`,
-        [user.id, m.teamA, m.teamB, m.result, m.playedAt, submissionKey, payloadHash],
+        [
+          user.id,
+          teamMap.get(m.teamA),
+          teamMap.get(m.teamB),
+          m.teamA,
+          m.teamB,
+          m.result,
+          m.playedAt,
+          submissionKey,
+          payloadHash,
+        ],
       );
+
       const matchId = matchRes.rows[0].id;
 
       for (const perf of m.performances) {
         const playerId = playerMap.get(perf.name);
+
         if (playerId) {
           await client.query(
-            `INSERT INTO performances ("matchId", "playerId", "teamSide", runs, wickets)
+            `INSERT INTO performances
+              ("matchId", "playerId", "teamSide", runs, wickets)
              VALUES ($1, $2, $3, $4, $5)`,
             [matchId, playerId, perf.teamSide, perf.runs, perf.wickets],
           );
@@ -264,13 +556,25 @@ async function seed() {
       }
     }
 
-    console.log(`Inserted ${matches.length} NPL matches with player performances.`);
+    await client.query('COMMIT');
+
+    console.log(`Inserted ${matches.length} demo matches.`);
+    console.log(`Total players: ${nplPlayers.length}`);
     console.log('\n--- SEED COMPLETE ---');
     console.log('Login credentials for showcase:');
     console.log(`Email:    ${email}`);
-    console.log(`Password: ${plainPassword}`);
+    console.log('Password: configured through SEED_PASSWORD (not printed).');
   } catch (err) {
-    console.error('Seeding failed:', err);
+    try {
+      await client.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('Rollback failed:', rollbackError.message);
+    }
+
+    console.error(
+      'Seeding failed:',
+      err instanceof Error ? `${err.name}: ${err.message}` : 'UnknownError',
+    );
     process.exitCode = 1;
   } finally {
     await client.end();

@@ -4,9 +4,15 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { LoaderCircle, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { roles, type Player } from '@/lib/contracts';
+import { roles, type Player, type Team } from '@/lib/contracts';
 import { submitJSON } from '@/lib/client-api';
-export function PlayerForm({ player }: { player?: Player }) {
+export function PlayerForm({
+  player,
+  teams = [],
+}: {
+  player?: Player;
+  teams?: Team[];
+}) {
   const [pending, setPending] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -14,7 +20,11 @@ export function PlayerForm({ player }: { player?: Player }) {
 
   async function handleDelete() {
     if (!player) return;
-    if (!window.confirm(`Are you sure you want to remove ${player.name} from the squad?`)) {
+    if (
+      !window.confirm(
+        `Are you sure you want to remove ${player.name} from the squad?`,
+      )
+    ) {
       return;
     }
     setDeleting(true);
@@ -24,7 +34,8 @@ export function PlayerForm({ player }: { player?: Player }) {
       router.push('/dashboard/players');
       router.refresh();
     } catch (cause) {
-      const text = cause instanceof Error ? cause.message : 'Could not delete player.';
+      const text =
+        cause instanceof Error ? cause.message : 'Could not delete player.';
       setError(text);
       toast.error(text);
     } finally {
@@ -42,6 +53,7 @@ export function PlayerForm({ player }: { player?: Player }) {
       matchesPlayed: Number(form.get('matchesPlayed')),
       totalRuns: Number(form.get('totalRuns')),
       totalWickets: Number(form.get('totalWickets')),
+      teamId: String(form.get('teamId') || ''),
     };
     const numberEntries = [
       values.basePrice,
@@ -104,6 +116,16 @@ export function PlayerForm({ player }: { player?: Player }) {
             <select name="role" defaultValue={player?.role ?? 'Batsman'}>
               {roles.map((r) => (
                 <option key={r}>{r}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Team
+            <select name="teamId" required defaultValue={player?.teamId ?? ''}>
+              {teams.map((team) => (
+                <option key={team.id} value={team.id}>
+                  {team.name}
+                </option>
               ))}
             </select>
           </label>
@@ -184,7 +206,10 @@ export function PlayerForm({ player }: { player?: Player }) {
         <Link className="button button-outline" href="/dashboard/players">
           Cancel
         </Link>
-        <button className="button button-primary" disabled={pending || deleting}>
+        <button
+          className="button button-primary"
+          disabled={pending || deleting}
+        >
           {pending ? (
             <LoaderCircle className="spin" size={18} />
           ) : (

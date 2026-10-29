@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import { z } from 'zod';
-import { authenticatedData } from '@/lib/backend';
-import { playerSchema } from '@/lib/contracts';
+import { authenticatedPlayer, authenticatedTeams } from '@/lib/backend';
 import { PageHeading } from '@/components/page-heading';
 import { PlayerForm } from '@/components/player-form';
 export const metadata = { title: 'Edit player' };
@@ -12,18 +11,16 @@ export default async function EditPlayerPage({
 }) {
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) notFound();
-  const players = z
-    .array(playerSchema)
-    .parse(await authenticatedData('/api/players'));
-  const player = players.find((p) => p.id === id);
+  const player = await authenticatedPlayer(id);
   if (!player) notFound();
+  const teams = await authenticatedTeams();
   return (
     <>
       <PageHeading
         title={`Update ${player.name}.`}
         description="Keep player details and career statistics accurate."
       />
-      <PlayerForm player={player} />
+      <PlayerForm player={player} teams={teams} />
     </>
   );
 }

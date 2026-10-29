@@ -69,4 +69,3 @@ export function calculateImpactScore(input: ScoreInput): ScoreBreakdown {
     keeper: keeperHundredths / 100,
   };
 }
-

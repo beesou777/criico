@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   UsersRound,
+  Shield,
   Trophy,
   NotebookPen,
   LogOut,
@@ -15,6 +16,7 @@ import { submitJSON } from '@/lib/client-api';
 const links = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/dashboard/players', label: 'Players', icon: UsersRound },
+  { href: '/dashboard/teams', label: 'Teams', icon: Shield },
   { href: '/dashboard/matches', label: 'Matchbook', icon: NotebookPen },
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];

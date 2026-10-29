@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import { Plus, ArrowUpRight } from 'lucide-react';
-import { z } from 'zod';
-import { authenticatedData } from '@/lib/backend';
+import { authenticatedData, authenticatedSummary } from '@/lib/backend';
 import {
-  rankedPlayerSchema,
-  cricketMatchSchema,
+  leaderboardPageSchema,
+  matchPageSchema,
   numberFormat,
 } from '@/lib/contracts';
 import { PageHeading } from '@/components/page-heading';
@@ -12,14 +11,17 @@ import { EmptyState } from '@/components/empty-state';
 import { MatchList } from '@/components/match-list';
 import { ScoreBreakdown } from '@/components/score-breakdown';
 export default async function DashboardPage() {
-  const [players, matches] = await Promise.all([
-    authenticatedData('/api/leaderboard').then((data) =>
-      z.array(rankedPlayerSchema).parse(data),
+  const [playerPage, matchPage, summary] = await Promise.all([
+    authenticatedData('/api/leaderboard?limit=1').then((data) =>
+      leaderboardPageSchema.parse(data),
     ),
-    authenticatedData('/api/matches').then((data) =>
-      z.array(cricketMatchSchema).parse(data),
+    authenticatedData('/api/matches?limit=3').then((data) =>
+      matchPageSchema.parse(data),
     ),
+    authenticatedSummary(),
   ]);
+  const players = playerPage.data;
+  const matches = matchPage.data;
   const leader = players[0];
   return (
     <>
@@ -36,25 +38,21 @@ export default async function DashboardPage() {
       <section className="summary-row" aria-label="Squad overview">
         <div>
           <span>Players in your roster</span>
-          <strong>{players.length.toString().padStart(2, '0')}</strong>
+          <strong>{summary.totalPlayers.toString().padStart(2, '0')}</strong>
           <Link href="/dashboard/players">
             Manage squad <ArrowUpRight size={16} />
           </Link>
         </div>
         <div>
           <span>Matches recorded here</span>
-          <strong>{matches.length.toString().padStart(2, '0')}</strong>
+          <strong>{summary.totalMatches.toString().padStart(2, '0')}</strong>
           <Link href="/dashboard/matches">
             Open matchbook <ArrowUpRight size={16} />
           </Link>
         </div>
         <div>
           <span>Career runs across roster</span>
-          <strong>
-            {numberFormat.format(
-              players.reduce((sum, p) => sum + p.totalRuns, 0),
-            )}
-          </strong>
+          <strong>{numberFormat.format(summary.totalRuns)}</strong>
           <small>Includes imported career statistics</small>
         </div>
       </section>

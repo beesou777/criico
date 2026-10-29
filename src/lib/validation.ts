@@ -27,7 +27,7 @@ export const credentialsSchema = z
       .transform((v) => v.toLowerCase().trim()),
     password: z
       .string()
-      .min(10, 'Use at least 10 characters.')
+      .min(8, 'Use at least 8 characters.')
       .max(72, 'Use at most 72 characters.')
       .refine(
         (v) => Buffer.byteLength(v, 'utf8') <= 72,
@@ -38,7 +38,11 @@ export const credentialsSchema = z
 
 export const playerSchema = z
   .object({
-    name: z.string().trim().min(2, 'Name must have at least 2 characters.').max(80, 'Name must be 80 characters or fewer.'),
+    name: z
+      .string()
+      .trim()
+      .min(2, 'Name must have at least 2 characters.')
+      .max(80, 'Name must be 80 characters or fewer.'),
     role: z.enum(roles),
     basePrice: z
       .number()
@@ -51,11 +55,12 @@ export const playerSchema = z
     matchesPlayed: count,
     totalRuns: count,
     totalWickets: count,
+    teamId: z.string().uuid('Choose a team.'),
   })
   .strict();
 
 export const playerUpdateSchema = playerSchema.extend({
-  expectedUpdatedAt: z.string().optional(),
+  expectedUpdatedAt: z.iso.datetime(),
 });
 
 export const performanceSchema = z
@@ -69,10 +74,18 @@ export const performanceSchema = z
 
 export const matchSchema = z
   .object({
-    teamA: z.string().trim().min(2, 'Team A must have at least 2 characters.').max(80),
-    teamB: z.string().trim().min(2, 'Team B must have at least 2 characters.').max(80),
+    teamA: z
+      .string()
+      .trim()
+      .min(2, 'Team A must have at least 2 characters.')
+      .max(80),
+    teamB: z
+      .string()
+      .trim()
+      .min(2, 'Team B must have at least 2 characters.')
+      .max(80),
     result: z.enum(['A', 'B', 'TIE', 'NO_RESULT']),
-    playedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format.'),
+    playedAt: z.iso.date('Enter a valid calendar date in YYYY-MM-DD format.'),
     submissionKey: z.string().uuid('Invalid submission key.'),
     performances: z
       .array(performanceSchema)

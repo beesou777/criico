@@ -1,22 +1,31 @@
-import { z } from 'zod';
-import { authenticatedData } from '@/lib/backend';
-import { playerSchema } from '@/lib/contracts';
+import { authenticatedPlayerOptions, authenticatedTeams } from '@/lib/backend';
 import { PageHeading } from '@/components/page-heading';
 import { EmptyState } from '@/components/empty-state';
 import { MatchForm } from '@/components/match-form';
+
 export const metadata = { title: 'Record match' };
+
 export default async function NewMatchPage() {
-  const players = z
-    .array(playerSchema)
-    .parse(await authenticatedData('/api/players'));
+  const players = await authenticatedPlayerOptions();
+  const teams = await authenticatedTeams();
+
   return (
     <>
       <PageHeading
         title="Put it in the matchbook."
         description="Record the result. Give every performance its place."
       />
-      {players.length ? (
-        <MatchForm players={players} />
+      {teams.length < 2 ? (
+        <section className="section-panel">
+          <EmptyState
+            title="You need at least two teams."
+            description="Create at least two teams before recording a match fixture."
+            href="/dashboard/teams"
+            action="Manage teams"
+          />
+        </section>
+      ) : players.length ? (
+        <MatchForm players={players} teams={teams} />
       ) : (
         <section className="section-panel">
           <EmptyState

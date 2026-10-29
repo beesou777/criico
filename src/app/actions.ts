@@ -1,8 +1,10 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { z } from 'zod';
 import { createUser, ServiceError } from '@/lib/services';
+import { credentialsSchema } from '@/lib/validation';
+import { limitAuth } from '@/lib/rate-limit';
+import { HttpError } from '@/lib/http';
 
 export type RegistrationState = { error: string | null };
 
@@ -10,18 +12,10 @@ export async function registerAction(
   _previous: RegistrationState,
   form: FormData,
 ): Promise<RegistrationState> {
-  const input = z
-    .object({
-      email: z.string().email('Enter a valid email address.').max(254),
-      password: z
-        .string()
-        .min(10, 'Use at least 10 characters.')
-        .max(72, 'Use at most 72 characters.'),
-    })
-    .safeParse({
-      email: form.get('email'),
-      password: form.get('password'),
-    });
+  const input = credentialsSchema.safeParse({
+    email: form.get('email'),
+    password: form.get('password'),
+  });
 
   if (!input.success) {
     return { error: input.error.issues[0]?.message ?? 'Check your details.' };
@@ -32,11 +26,12 @@ export async function registerAction(
   }
 
   try {
+    limitAuth(input.data.email);
     await createUser(input.data.email, input.data.password);
   } catch (error) {
     return {
       error:
-        error instanceof ServiceError
+        error instanceof ServiceError || error instanceof HttpError
           ? error.message
           : 'Registration failed. Please try again.',
     };

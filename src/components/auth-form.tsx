@@ -72,10 +72,10 @@ export function AuthForm({
               type={visible ? 'text' : 'password'}
               autoComplete={isRegister ? 'new-password' : 'current-password'}
               required
-              minLength={10}
+              minLength={8}
               maxLength={72}
               placeholder={
-                isRegister ? 'At least 10 characters' : 'Your password'
+                isRegister ? 'At least 8 characters' : 'Your password'
               }
             />
             <button
@@ -96,7 +96,7 @@ export function AuthForm({
               type={visible ? 'text' : 'password'}
               autoComplete="new-password"
               required
-              minLength={10}
+              minLength={8}
               maxLength={72}
               placeholder="Re-enter your password"
             />
