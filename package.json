@@ -15,7 +15,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:migrate": "node --env-file=.env scripts/migrate.js"
+    "db:migrate": "node --env-file=.env scripts/migrate.js",
+    "db:seed": "node --env-file=.env scripts/seed.js"
   },
   "dependencies": {
     "@fontsource/plus-jakarta-sans": "^5.2.8",

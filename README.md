@@ -135,11 +135,20 @@ PORT=3100
 HOST=127.0.0.1
 ```
 
-### 3. Database Migration
+### 3. Database Migration & Seed
 Run the database migration to create the tables and indexes:
 ```bash
 pnpm db:migrate
 ```
+
+(Optional) Populate realistic Nepal Premier League (NPL) showcase data (15 players across all 8 franchises, 4 matches, and full leaderboard rankings):
+```bash
+pnpm db:seed
+```
+
+**Showcase Demo Account:**
+- **Email:** `bishwa@yopmail.com`
+- **Password:** `Test@123`
 
 ### 4. Run Development Server
 ```bash
@@ -212,4 +221,4 @@ Outline for technical project presentation:
    - Show `tests/player-form.test.tsx` verifying the UI toast notification on negative runs input.
 5. **Live App Demonstration (4:00 – 5:00)**:
    - Showcase the public landing page with cricket delivery animation.
-   - Register an account, add a player, edit career stats, record a match, and display the real-time leaderboard with expandable score breakdown.
+   - Log in using the seeded showcase account (`bishwa@yopmail.com`), review squad rosters, view recorded matches, and inspect the real-time leaderboard with expandable score breakdown.
