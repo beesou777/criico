@@ -10,7 +10,9 @@ import { Pagination } from '@/components/pagination';
 import { PlayerFilters } from '@/components/player-filters';
 import { playerPageQuery, normalizePage } from '@/lib/list-page';
 import type { SearchParams } from '@/lib/pagination';
+
 export const metadata = { title: 'Players' };
+
 export default async function PlayersPage({
   searchParams,
 }: {
@@ -23,19 +25,23 @@ export default async function PlayersPage({
   ]);
   const result = playerPageSchema.parse(playerData);
   normalizePage('/dashboard/players', query, result.meta.page);
+
   return (
     <ListTransition>
       <PageHeading
         title="The squad."
         description="Every role has its place. Keep your players and career records together."
         action={
-          <Link href="/dashboard/players/new" className="button button-primary">
+          <Link
+            href="/dashboard/players/new"
+            className="button button-primary inline-flex justify-center items-center gap-[9px] min-h-[47px] p-[12px_22px] font-semibold border border-transparent rounded leading-[1.4] transition-colors duration-200 whitespace-nowrap bg-accent text-white hover:bg-accent-hover text-xs"
+          >
             <Plus size={18} />
             Add a player
           </Link>
         }
       />
-      <section className="section-panel">
+      <section className="section-panel bg-card border border-border rounded-lg overflow-hidden">
         <PlayerFilters
           query={query}
           pathname="/dashboard/players"
@@ -49,7 +55,7 @@ export default async function PlayersPage({
             title={
               query.search || query.role
                 ? 'No players match those filters.'
-                : 'Who?s first on the team sheet?'
+                : 'Who’s first on the team sheet?'
             }
             description={
               query.search || query.role

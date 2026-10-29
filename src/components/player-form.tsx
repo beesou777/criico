@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -6,6 +7,7 @@ import { LoaderCircle, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { roles, type Player, type Team } from '@/lib/contracts';
 import { submitJSON } from '@/lib/client-api';
+
 export function PlayerForm({
   player,
   teams = [],
@@ -42,6 +44,7 @@ export function PlayerForm({
       setDeleting(false);
     }
   }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -76,6 +79,7 @@ export function PlayerForm({
       toast.error(message);
       return;
     }
+
     setPending(true);
     try {
       await submitJSON(
@@ -95,12 +99,18 @@ export function PlayerForm({
       setPending(false);
     }
   }
+
   return (
-    <form onSubmit={submit} className="editor-form">
-      <fieldset disabled={pending}>
-        <legend>Player details</legend>
-        <div className="form-grid">
-          <label>
+    <form onSubmit={submit} className="editor-form max-w-[900px] py-5">
+      <fieldset
+        className="bg-card border border-border rounded-lg p-[25px] mb-6 max-md:p-[20px_16px]"
+        disabled={pending}
+      >
+        <legend className="text-[15px] font-bold text-foreground px-2">
+          Player details
+        </legend>
+        <div className="form-grid grid grid-cols-2 gap-[22px] max-md:grid-cols-1 max-md:gap-5">
+          <label className="flex flex-col gap-2 text-xs font-semibold text-foreground">
             Player name
             <input
               name="name"
@@ -109,19 +119,29 @@ export function PlayerForm({
               maxLength={80}
               defaultValue={player?.name}
               placeholder="Full name"
+              className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
             />
           </label>
-          <label>
+          <label className="flex flex-col gap-2 text-xs font-semibold text-foreground">
             Playing role
-            <select name="role" defaultValue={player?.role ?? 'Batsman'}>
+            <select
+              name="role"
+              defaultValue={player?.role ?? 'Batsman'}
+              className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
+            >
               {roles.map((r) => (
                 <option key={r}>{r}</option>
               ))}
             </select>
           </label>
-          <label>
+          <label className="flex flex-col gap-2 text-xs font-semibold text-foreground">
             Team
-            <select name="teamId" required defaultValue={player?.teamId ?? ''}>
+            <select
+              name="teamId"
+              required
+              defaultValue={player?.teamId ?? ''}
+              className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
+            >
               {teams.map((team) => (
                 <option key={team.id} value={team.id}>
                   {team.name}
@@ -129,7 +149,7 @@ export function PlayerForm({
               ))}
             </select>
           </label>
-          <label>
+          <label className="flex flex-col gap-2 text-xs font-semibold text-foreground">
             Base price (NPR)
             <input
               name="basePrice"
@@ -138,19 +158,25 @@ export function PlayerForm({
               max={1000000000}
               required
               defaultValue={player?.basePrice ?? 0}
+              className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
             />
           </label>
         </div>
       </fieldset>
-      <fieldset disabled={pending}>
-        <legend>Career statistics</legend>
-        <p className="form-description">
+      <fieldset
+        className="bg-card border border-border rounded-lg p-[25px] mb-6 max-md:p-[20px_16px]"
+        disabled={pending}
+      >
+        <legend className="text-[15px] font-bold text-foreground px-2">
+          Career statistics
+        </legend>
+        <p className="form-description text-secondary text-xs leading-[1.8] mb-6 max-w-[75ch]">
           {player
             ? 'These are career corrections. They do not change previously recorded match performances.'
             : 'Enter existing career totals, or start at zero. Future recorded matches add to these numbers.'}
         </p>
-        <div className="form-grid three">
-          <label>
+        <div className="form-grid three grid grid-cols-3 gap-[22px] max-md:grid-cols-1 max-md:gap-5">
+          <label className="flex flex-col gap-2 text-xs font-semibold text-foreground">
             Matches played
             <input
               name="matchesPlayed"
@@ -158,9 +184,10 @@ export function PlayerForm({
               step="1"
               required
               defaultValue={player?.matchesPlayed ?? 0}
+              className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
             />
           </label>
-          <label>
+          <label className="flex flex-col gap-2 text-xs font-semibold text-foreground">
             Total runs
             <input
               name="totalRuns"
@@ -168,9 +195,10 @@ export function PlayerForm({
               step="1"
               required
               defaultValue={player?.totalRuns ?? 0}
+              className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
             />
           </label>
-          <label>
+          <label className="flex flex-col gap-2 text-xs font-semibold text-foreground">
             Total wickets
             <input
               name="totalWickets"
@@ -178,40 +206,48 @@ export function PlayerForm({
               step="1"
               required
               defaultValue={player?.totalWickets ?? 0}
+              className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
             />
           </label>
         </div>
       </fieldset>
       {error && (
-        <p role="alert" className="notice error">
+        <p
+          role="alert"
+          className="notice error text-xs bg-[#fae8eb] border border-[#f1c3cb] p-[13px_16px] rounded-[4px] text-[#a01131] mb-5 font-semibold"
+        >
           {error}
         </p>
       )}
-      <div className="form-actions">
+      <div className="form-actions flex justify-end gap-[14px] mt-[25px] max-md:justify-between items-center">
         {player && (
           <button
             type="button"
-            className="button button-danger"
+            className="button button-danger inline-flex justify-center items-center gap-2 min-h-[47px] p-[12px_22px] font-semibold border border-transparent rounded-[4px] bg-[#a91230] text-white hover:bg-[#8f0f29] transition-colors text-xs cursor-pointer"
             disabled={pending || deleting}
             onClick={handleDelete}
           >
             {deleting ? (
-              <LoaderCircle className="spin" size={18} />
+              <LoaderCircle className="animate-spin" size={18} />
             ) : (
               <Trash2 size={18} />
             )}
             {deleting ? 'Removing…' : 'Delete player'}
           </button>
         )}
-        <Link className="button button-outline" href="/dashboard/players">
+        <Link
+          className="button button-outline inline-flex justify-center items-center gap-2 min-h-[47px] p-[12px_22px] font-semibold border border-[#b23855] text-[#9b1836] rounded-[4px] bg-transparent hover:bg-soft transition-colors text-xs whitespace-nowrap"
+          href="/dashboard/players"
+        >
           Cancel
         </Link>
         <button
-          className="button button-primary"
+          type="submit"
+          className="button button-primary inline-flex justify-center items-center gap-2 min-h-[47px] p-[12px_22px] font-semibold border border-transparent rounded-[4px] bg-accent text-white hover:bg-accent-hover transition-colors text-xs cursor-pointer whitespace-nowrap"
           disabled={pending || deleting}
         >
           {pending ? (
-            <LoaderCircle className="spin" size={18} />
+            <LoaderCircle className="animate-spin" size={18} />
           ) : (
             <Check size={18} />
           )}

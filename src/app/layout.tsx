@@ -6,6 +6,7 @@ import '@fontsource/plus-jakarta-sans/600.css';
 import '@fontsource/plus-jakarta-sans/700.css';
 import '@fontsource/plus-jakarta-sans/800.css';
 import './globals.css';
+
 export const metadata: Metadata = {
   title: {
     default: 'Criico — Cricket. Community. Together.',
@@ -14,13 +15,17 @@ export const metadata: Metadata = {
   description:
     'Manage your grassroots cricket roster, record match performances, and understand every player’s impact.',
 };
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>
-        <a href="#main" className="skip-link">
+        <a
+          href="#main"
+          className="skip-link fixed z-[100] top-[10px] left-[10px] -translate-y-[150%] p-[12px_20px] bg-primary text-white focus:translate-y-0 transition-transform"
+        >
           Skip to content
         </a>
         {children}

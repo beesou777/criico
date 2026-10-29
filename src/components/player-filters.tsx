@@ -1,4 +1,5 @@
 'use client';
+
 import type { FormEvent } from 'react';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
@@ -19,6 +20,7 @@ export function PlayerFilters({
   teams?: Team[];
 }) {
   const { pending, navigate } = useListNavigation();
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -38,36 +40,46 @@ export function PlayerFilters({
     if (sort && direction) params.set('direction', direction);
     navigate(`${pathname}?${params.toString()}`);
   }
+
   return (
     <form
       action={pathname}
       onSubmit={submit}
-      className="table-toolbar"
+      className="table-toolbar flex items-center gap-[14px] p-[18px_22px] border-b border-border max-md:p-[14px] max-md:gap-[10px] max-md:flex-wrap"
       key={`${query.search}:${query.role ?? ''}:${query.teamId ?? ''}:${query.sort ?? ''}:${query.direction ?? ''}`}
     >
       <input type="hidden" name="limit" value={query.limit} />
-      <label className="search-field">
-        <Search size={18} />
+      <label className="search-field flex flex-row items-center gap-2 border border-[#b9c4b2] rounded-[4px] pl-3 max-w-[330px] w-full bg-white max-md:max-w-none max-md:flex-1 max-md:min-w-[150px]">
+        <Search size={18} className="text-secondary shrink-0" />
         <span className="sr-only">Search players</span>
         <input
+          className="bg-transparent border-0 min-h-[40px] pl-0 text-xs text-ink outline-none w-full"
           name="search"
           placeholder="Find a player…"
           maxLength={80}
           defaultValue={query.search}
         />
       </label>
-      <label className="filter-field">
+      <label className="filter-field min-w-[150px]">
         <span className="sr-only">Filter by role</span>
-        <select name="role" defaultValue={query.role ?? ''}>
+        <select
+          className="min-h-[42px] p-[8px_30px_8px_12px] text-xs w-full rounded-[4px] border border-[#b9c4b2] bg-white text-ink"
+          name="role"
+          defaultValue={query.role ?? ''}
+        >
           <option value="">All roles</option>
           {roles.map((role) => (
             <option key={role}>{role}</option>
           ))}
         </select>
       </label>
-      <label className="filter-field">
+      <label className="filter-field min-w-[150px]">
         <span className="sr-only">Filter by team</span>
-        <select name="teamId" defaultValue={query.teamId ?? ''}>
+        <select
+          className="min-h-[42px] p-[8px_30px_8px_12px] text-xs w-full rounded-[4px] border border-[#b9c4b2] bg-white text-ink"
+          name="teamId"
+          defaultValue={query.teamId ?? ''}
+        >
           <option value="">All teams</option>
           {teams.map((team) => (
             <option key={team.id} value={team.id}>
@@ -76,9 +88,13 @@ export function PlayerFilters({
           ))}
         </select>
       </label>
-      <label className="filter-field">
+      <label className="filter-field min-w-[150px]">
         <span className="sr-only">Sort players by</span>
-        <select name="sort" defaultValue={query.sort ?? ''}>
+        <select
+          className="min-h-[42px] p-[8px_30px_8px_12px] text-xs w-full rounded-[4px] border border-[#b9c4b2] bg-white text-ink"
+          name="sort"
+          defaultValue={query.sort ?? ''}
+        >
           <option value="">Default order</option>
           <option value="impact">Impact score</option>
           <option value="name">Player name</option>
@@ -89,9 +105,10 @@ export function PlayerFilters({
           <option value="basePrice">Base price</option>
         </select>
       </label>
-      <label className="filter-field sort-direction">
+      <label className="filter-field min-w-[150px] sort-direction">
         <span className="sr-only">Sort direction</span>
         <select
+          className="min-h-[42px] p-[8px_30px_8px_12px] text-xs w-full rounded-[4px] border border-[#b9c4b2] bg-white text-ink"
           name="direction"
           defaultValue={query.direction ?? 'desc'}
           aria-label="Sort direction"
@@ -101,7 +118,7 @@ export function PlayerFilters({
         </select>
       </label>
       <button
-        className="button button-outline filter-submit"
+        className="filter-submit button button-outline inline-flex justify-center items-center gap-2 min-h-[40px] p-[9px_15px] font-semibold border border-[#b23855] text-[#9b1836] rounded-[4px] bg-transparent hover:bg-soft text-[11px] whitespace-nowrap cursor-pointer transition-colors max-md:min-h-[42px]"
         type="submit"
         disabled={pending}
       >
@@ -114,7 +131,7 @@ export function PlayerFilters({
         query.direction) && (
         <Link
           href={`${pathname}?limit=${query.limit}`}
-          className="filter-reset"
+          className="filter-reset text-[11px] text-secondary underline hover:text-accent"
           onClick={(event) =>
             navigateListLink(
               event,
@@ -126,7 +143,10 @@ export function PlayerFilters({
           Clear
         </Link>
       )}
-      <span className="result-count" aria-live="polite">
+      <span
+        className="result-count ml-auto text-[10px] text-secondary whitespace-nowrap max-md:w-full max-md:ml-0"
+        aria-live="polite"
+      >
         {total} players
       </span>
     </form>
