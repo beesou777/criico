@@ -52,15 +52,12 @@ describe('Search navigation', () => {
         target: { value: 'runs' },
       },
     );
-    fireEvent.change(screen.getByRole('combobox', { name: 'Sort direction' }), {
-      target: { value: 'asc' },
-    });
     const form = screen.getByRole('button', { name: 'Apply' }).closest('form');
     if (!form) throw new Error('Leaderboard filter form missing.');
     fireEvent.submit(form);
 
     expect(mocks.push).toHaveBeenCalledWith(
-      '/dashboard/leaderboard?limit=20&page=1&teamId=00000000-0000-4000-8000-000000000001&sort=runs&direction=asc',
+      '/dashboard/leaderboard?limit=20&page=1&teamId=00000000-0000-4000-8000-000000000001&sort=runs',
       { scroll: false },
     );
   });

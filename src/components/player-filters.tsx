@@ -34,12 +34,10 @@ export function PlayerFilters({
     const role = String(form.get('role') ?? '');
     const teamId = String(form.get('teamId') ?? '');
     const sort = String(form.get('sort') ?? '');
-    const direction = String(form.get('direction') ?? '');
     if (search) params.set('search', search);
     if (role) params.set('role', role);
     if (teamId) params.set('teamId', teamId);
     if (showSort && sort) params.set('sort', sort);
-    if (showSort && sort && direction) params.set('direction', direction);
     navigate(`${pathname}?${params.toString()}`);
   }
 
@@ -48,7 +46,7 @@ export function PlayerFilters({
       action={pathname}
       onSubmit={submit}
       className="table-toolbar flex items-center gap-[14px] p-[18px_22px] border-b border-border max-md:p-[14px] max-md:gap-[10px] max-md:flex-wrap"
-      key={`${query.search}:${query.role ?? ''}:${query.teamId ?? ''}:${query.sort ?? ''}:${query.direction ?? ''}`}
+      key={`${query.search}:${query.role ?? ''}:${query.teamId ?? ''}:${query.sort ?? ''}`}
     >
       <input type="hidden" name="limit" value={query.limit} />
       <label className="search-field flex flex-row items-center gap-2 border border-[#b9c4b2] rounded-[4px] pl-3 max-w-[330px] w-full bg-white max-md:max-w-none max-md:flex-1 max-md:min-w-[150px]">
@@ -109,18 +107,6 @@ export function PlayerFilters({
               <option value="basePrice">Base price</option>
             </select>
           </label>
-          <label className="filter-field min-w-[150px] sort-direction">
-            <span className="sr-only">Sort direction</span>
-            <select
-              className="min-h-[42px] p-[8px_30px_8px_12px] text-xs w-full rounded-[4px] border border-[#b9c4b2] bg-white text-ink"
-              name="direction"
-              defaultValue={query.direction ?? 'desc'}
-              aria-label="Sort direction"
-            >
-              <option value="desc">Descending</option>
-              <option value="asc">Ascending</option>
-            </select>
-          </label>
         </>
       )}
       <button
@@ -133,7 +119,7 @@ export function PlayerFilters({
       {(query.search ||
         query.role ||
         query.teamId ||
-        (showSort && (query.sort || query.direction))) && (
+        (showSort && query.sort)) && (
         <Link
           href={`${pathname}?limit=${query.limit}`}
           className="filter-reset text-[11px] text-secondary underline hover:text-accent"
