@@ -1,7 +1,8 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { createUser, ServiceError } from '@/lib/services';
+import { createUser } from '@/lib/services/auth';
+import { ServiceError } from '@/lib/services/shared';
 import { credentialsSchema } from '@/lib/validation';
 import { limitAuth } from '@/lib/rate-limit';
 import { HttpError } from '@/lib/http';

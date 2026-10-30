@@ -1,42 +1,42 @@
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { authenticatedData } from '@/lib/backend';
+import { authenticatedMatches } from '@/lib/backend';
 import { matchPageSchema } from '@/lib/contracts';
 import { PageHeading } from '@/components/page-heading';
 import { EmptyState } from '@/components/empty-state';
 import { MatchList } from '@/components/match-list';
 import { ListTransition } from '@/components/list-transition';
 import { Pagination } from '@/components/pagination';
-import {
-  matchPageQuery,
-  listQueryString,
-  normalizePage,
-} from '@/lib/list-page';
+import { matchPageQuery, normalizePage } from '@/lib/list-page';
 import type { SearchParams } from '@/lib/pagination';
+
 export const metadata = { title: 'Matchbook' };
+
 export default async function MatchesPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
   const query = matchPageQuery(await searchParams);
-  const result = matchPageSchema.parse(
-    await authenticatedData('/api/matches?' + listQueryString(query)),
-  );
+  const result = matchPageSchema.parse(await authenticatedMatches(query));
   normalizePage('/dashboard/matches', query, result.meta.page);
+
   return (
     <ListTransition>
       <PageHeading
         title="The matchbook."
         description="A record of the games your community played."
         action={
-          <Link className="button button-primary" href="/dashboard/matches/new">
+          <Link
+            className="button button-primary inline-flex justify-center items-center gap-[9px] min-h-[47px] p-[12px_22px] font-semibold border border-transparent rounded leading-[1.4] transition-colors duration-200 whitespace-nowrap bg-accent text-white hover:bg-accent-hover text-xs"
+            href="/dashboard/matches/new"
+          >
             <Plus size={18} />
             Record a match
           </Link>
         }
       />
-      <section className="section-panel">
+      <section className="section-panel bg-card border border-border rounded-lg overflow-hidden">
         {result.data.length ? (
           <MatchList matches={result.data} />
         ) : (

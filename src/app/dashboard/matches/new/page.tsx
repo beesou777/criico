@@ -6,8 +6,10 @@ import { MatchForm } from '@/components/match-form';
 export const metadata = { title: 'Record match' };
 
 export default async function NewMatchPage() {
-  const players = await authenticatedPlayerOptions();
-  const teams = await authenticatedTeams();
+  const [players, teams] = await Promise.all([
+    authenticatedPlayerOptions(),
+    authenticatedTeams(),
+  ]);
 
   return (
     <>
@@ -16,7 +18,7 @@ export default async function NewMatchPage() {
         description="Record the result. Give every performance its place."
       />
       {teams.length < 2 ? (
-        <section className="section-panel">
+        <section className="bg-card border border-border rounded-lg overflow-hidden">
           <EmptyState
             title="You need at least two teams."
             description="Create at least two teams before recording a match fixture."
@@ -27,7 +29,7 @@ export default async function NewMatchPage() {
       ) : players.length ? (
         <MatchForm players={players} teams={teams} />
       ) : (
-        <section className="section-panel">
+        <section className="bg-card border border-border rounded-lg overflow-hidden">
           <EmptyState
             title="You need a squad first."
             description="Add at least one player before recording a match."

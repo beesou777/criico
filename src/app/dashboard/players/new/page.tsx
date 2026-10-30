@@ -14,7 +14,7 @@ export default async function NewPlayerPage() {
       {teams.length ? (
         <PlayerForm teams={teams} />
       ) : (
-        <section className="section-panel">
+        <section className="bg-card border border-border rounded-lg overflow-hidden">
           <EmptyState
             title="Create a team first."
             description="Every player must belong to a team before they can appear in matchbook or leaderboard views."

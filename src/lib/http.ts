@@ -8,6 +8,7 @@ export class HttpError extends Error {
     super(message);
   }
 }
+
 export function requireSameOrigin(request: NextRequest): void {
   const origin = request.headers.get('origin');
   if (
@@ -22,6 +23,7 @@ export function requireSameOrigin(request: NextRequest): void {
   if (origin !== expected)
     throw new HttpError(403, 'Request origin is not allowed.');
 }
+
 export async function readJSON(request: NextRequest): Promise<unknown> {
   if (
     !request.headers
@@ -62,6 +64,7 @@ export async function readJSON(request: NextRequest): Promise<unknown> {
     throw new HttpError(400, 'Send valid JSON.');
   }
 }
+
 export function apiError(error: unknown): NextResponse {
   if (error instanceof z.ZodError)
     return NextResponse.json(

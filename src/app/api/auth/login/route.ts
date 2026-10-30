@@ -7,7 +7,7 @@ import {
 } from '@/lib/session';
 import { apiError, readJSON, requireSameOrigin } from '@/lib/http';
 import { limitAuth } from '@/lib/rate-limit';
-import { authenticateUser } from '@/lib/services';
+import { authenticateUser } from '@/lib/services/auth';
 export async function POST(request: NextRequest) {
   try {
     requireSameOrigin(request);

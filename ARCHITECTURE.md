@@ -4,6 +4,8 @@
 
 One full-stack Next.js 15 App Router application. Route handlers and Server Actions call shared server-side services; PostgreSQL access uses parameterized queries through pg. There is no separate Express process and TypeORM is not used.
 
+Backend code is grouped by domain under `src/lib/services/`: authentication, players and leaderboard, teams, matches and dashboard reads. `services.ts` is only a compatibility export for tests and older imports. API route handlers import their domain service directly; Server Components use the authenticated helpers in `backend.ts` and call those services without making an HTTP request back into the same app.
+
 ```mermaid
 flowchart TD
     Browser[React forms and lists] --> Routes[Next.js API route handlers]
@@ -29,7 +31,9 @@ Database connections verify TLS certificates by default. Local development may e
 
 User owns Players and Matches. Performance links one Player to one Match, with its team side, runs, and wickets. A match stores team names, outcome, Nepal calendar date, and an owner-scoped submission key plus canonical payload hash.
 
-Recording a match inserts the match, locks all owned participants in ID order, inserts their performances, and increments career totals in one transaction. A zero-stat participant still gains one match. Invalid participants or overflow roll back the transaction. Stable lock ordering reduces deadlock risk; it is not a claim that every possible deadlock is impossible.
+Recording a match inserts the match, locks all owned participants in ID order, batch-inserts their performances, and batch-increments career totals in one transaction. Database round trips for recording a match stay constant as the number of players increases. A zero-stat participant still gains one match. Invalid participants or overflow roll back the transaction. Stable lock ordering reduces deadlock risk; it is not a claim that every possible deadlock is impossible.
+
+The dashboard reads its summary, top run scorers, top wicket takers, and recent matches in one PostgreSQL round trip. Owner-scoped indexes support common player sorting, the default Impact Score order, and recent match history. The dashboard disables speculative route prefetch so the browser does not load several large RSC pages before the organizer opens them.
 
 Retrying an identical submission key/payload returns the existing result without incrementing statistics. A different payload with that key returns 409. A unique database constraint resolves concurrent duplicate submissions.
 

@@ -1,4 +1,4 @@
-import { authenticatedData, authenticatedTeams } from '@/lib/backend';
+import { authenticatedLeaderboard, authenticatedTeams } from '@/lib/backend';
 import { leaderboardPageSchema, numberFormat } from '@/lib/contracts';
 import { Pagination } from '@/components/pagination';
 import { PlayerFilters } from '@/components/player-filters';
@@ -21,12 +21,12 @@ export default async function LeaderboardPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  // Initial leaderboard data is deliberately fetched in this Server Component.
   const query = playerPageQuery(await searchParams, '/dashboard/leaderboard');
-  const result = leaderboardPageSchema.parse(
-    await authenticatedData('/api/leaderboard?' + listQueryString(query)),
-  );
-  const teams = await authenticatedTeams();
+  const [leaderboardData, teams] = await Promise.all([
+    authenticatedLeaderboard(query),
+    authenticatedTeams(),
+  ]);
+  const result = leaderboardPageSchema.parse(leaderboardData);
   const players = result.data;
   normalizePage('/dashboard/leaderboard', query, result.meta.page);
   const offset = (result.meta.page - 1) * result.meta.limit;
@@ -42,8 +42,12 @@ export default async function LeaderboardPage({
     );
     return `/dashboard/leaderboard?${params.toString()}`;
   };
+
   const sortLabel = (label: string, field: string) => (
-    <Link className="table-sort" href={sortHref(field)}>
+    <Link
+      className="inline-flex items-center gap-1 text-inherit hover:text-accent transition-colors"
+      href={sortHref(field)}
+    >
       {label}
       <span aria-hidden="true">
         {selectedSort === field
@@ -61,7 +65,7 @@ export default async function LeaderboardPage({
         title="Impact, beyond the scorecard."
         description="Ranked by Impact Score by default. Search, filter, or sort the roster to explore player performance."
       />
-      <section className="section-panel">
+      <section className="section-panel bg-card border border-border rounded-lg overflow-hidden">
         <PlayerFilters
           query={query}
           pathname="/dashboard/leaderboard"
@@ -69,8 +73,8 @@ export default async function LeaderboardPage({
           teams={teams}
         />
         {players.length ? (
-          <div className="table-scroll">
-            <table className="leaderboard-table">
+          <div className="table-scroll relative overflow-x-auto max-md:w-full">
+            <table className="leaderboard-table table-fixed min-w-[940px] w-full border-collapse text-left text-xs">
               <caption className="sr-only">
                 Players ranked by Cricket Impact Score, highest first
               </caption>
@@ -144,9 +148,11 @@ export default async function LeaderboardPage({
         )}
         <Pagination meta={result.meta} />
       </section>
-      <details className="formula-panel">
-        <summary>How is Impact Score calculated?</summary>
-        <p>
+      <details className="formula-panel mt-6 bg-[#e9eddf] rounded-[5px] p-[20px_24px] text-xs">
+        <summary className="cursor-pointer font-bold text-foreground">
+          How is Impact Score calculated?
+        </summary>
+        <p className="text-[#42573c] max-w-[75ch] mt-4 leading-normal">
           Runs × 1.2 + wickets × 20. Batsmen receive × 1.3 on their run
           contribution; Bowlers receive × 1.5 on their wicket contribution.
           Wicketkeepers receive a flat +30 with no role multiplier.

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getAuthUser } from '@/lib/session';
-import { getMatches, recordMatch } from '@/lib/services';
+import { getMatches, recordMatch } from '@/lib/services/matches';
 import { matchListQuerySchema, urlQuery } from '@/lib/pagination';
 import { apiError, readJSON, requireSameOrigin } from '@/lib/http';
 import { matchSchema } from '@/lib/validation';

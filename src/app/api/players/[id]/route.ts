@@ -2,7 +2,11 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { z } from 'zod';
 import { getAuthUser } from '@/lib/session';
 import { playerUpdateSchema } from '@/lib/validation';
-import { getPlayerById, updatePlayer, deletePlayer } from '@/lib/services';
+import {
+  deletePlayer,
+  getPlayerById,
+  updatePlayer,
+} from '@/lib/services/players';
 import { apiError, readJSON, requireSameOrigin } from '@/lib/http';
 type Context = { params: Promise<{ id: string }> };
 export async function GET(request: NextRequest, context: Context) {
