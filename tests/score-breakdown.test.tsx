@@ -68,11 +68,9 @@ afterEach(() => {
 describe('ScoreBreakdown dialog', () => {
   it('opens the score calculation in a dialog without changing the table row content', () => {
     render(<ScoreBreakdown player={player('Batsman')} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: /view score breakdown/i }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: /view profile/i }));
 
-    expect(screen.getByRole('dialog', { name: 'Impact Score' })).toBeVisible();
+    expect(screen.getByRole('dialog', { name: 'Asha Batter' })).toBeVisible();
     expect(screen.getByText('Runs contribution')).toBeInTheDocument();
     expect(screen.getByText('Wickets contribution')).toBeInTheDocument();
     expect(screen.getByText('Batsman role bonus')).toBeInTheDocument();
@@ -83,11 +81,11 @@ describe('ScoreBreakdown dialog', () => {
   it('closes with the close control and returns focus to its trigger', () => {
     render(<ScoreBreakdown player={player('Bowler')} />);
     const trigger = screen.getByRole('button', {
-      name: /view score breakdown/i,
+      name: /view profile/i,
     });
     fireEvent.click(trigger);
     fireEvent.click(
-      screen.getByRole('button', { name: 'Close score breakdown' }),
+      screen.getByRole('button', { name: 'Close player profile' }),
     );
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -96,20 +94,16 @@ describe('ScoreBreakdown dialog', () => {
 
   it('moves keyboard focus into the dialog when it opens', () => {
     render(<ScoreBreakdown player={player('All-rounder')} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: /view score breakdown/i }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: /view profile/i }));
 
     expect(
-      screen.getByRole('button', { name: 'Close score breakdown' }),
+      screen.getByRole('button', { name: 'Close player profile' }),
     ).toHaveFocus();
   });
 
   it('closes when Escape is pressed', () => {
     render(<ScoreBreakdown player={player('All-rounder')} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: /view score breakdown/i }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: /view profile/i }));
     fireEvent(
       screen.getByRole('dialog'),
       new Event('cancel', { bubbles: false, cancelable: true }),
@@ -120,9 +114,7 @@ describe('ScoreBreakdown dialog', () => {
 
   it('closes when the dialog backdrop is clicked', () => {
     render(<ScoreBreakdown player={player('Wicketkeeper')} />);
-    fireEvent.click(
-      screen.getByRole('button', { name: /view score breakdown/i }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: /view profile/i }));
     fireEvent.click(screen.getByRole('dialog'), { clientX: 20, clientY: 20 });
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

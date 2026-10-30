@@ -89,6 +89,7 @@ export default async function LeaderboardPage({
                   <th className="numeric">{sortLabel('Wickets', 'wickets')}</th>
                   <th>Status</th>
                   <th>{sortLabel('Impact Score', 'impact')}</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -119,7 +120,10 @@ export default async function LeaderboardPage({
                       </span>
                     </td>
                     <td>
-                      <ScoreBreakdown player={player} />
+                      <ScoreBreakdown player={player} showTrigger={false} />
+                    </td>
+                    <td>
+                      <ScoreBreakdown player={player} showScore={false} />
                     </td>
                   </tr>
                 ))}
