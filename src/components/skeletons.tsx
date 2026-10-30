@@ -84,6 +84,9 @@ export function ListPageSkeleton({
           >
             <Skeleton className="w-[330px] max-w-[55%] h-[42px]" />
             <Skeleton className="w-[150px] h-[42px]" />
+            <Skeleton className="w-[150px] h-[42px]" />
+            <Skeleton className="w-[150px] h-[42px]" />
+            <Skeleton className="w-[70px] h-[42px]" />
           </div>
         )}
         {matches ? (

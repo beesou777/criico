@@ -3,39 +3,44 @@ import { Skeleton } from '@/components/skeletons';
 export default function TeamsLoading() {
   return (
     <div role="status" aria-label="Loading teams" aria-busy="true">
-      <div className="page-heading flex justify-between items-center gap-[25px] mb-8 max-md:flex-col max-md:items-start max-md:gap-5 max-md:mb-[26px]">
+      <div className="page-heading mb-8 flex items-center justify-between gap-[25px] max-md:mb-[26px] max-md:flex-col max-md:items-start max-md:gap-5">
         <div>
           <h1 className="text-[clamp(25px,2.7vw,38px)] font-extrabold tracking-[-0.04em] leading-[1.25] text-foreground max-md:text-[27px]">
             Your teams.
           </h1>
-          <p className="text-secondary text-xs mt-2.5 max-w-[65ch]">
-            Loading your teams and player counts.
+          <p className="mt-2.5 max-w-[65ch] text-xs text-secondary">
+            Create the clubs you manage, then assign every player to the right
+            side.
           </p>
         </div>
+        <Skeleton className="h-[47px] w-[140px]" />
       </div>
-      <section className="team-panel section-panel bg-card border border-border rounded-lg overflow-hidden p-[20px_22px_22px] max-sm:p-4">
-        <div
-          className="team-create-form flex items-end gap-[18px] p-[2px_0_22px] border-b border-border max-sm:items-stretch max-sm:flex-col"
-          aria-hidden="true"
-        >
-          <div className="flex-1">
-            <Skeleton className="w-[90px] h-3 mb-2" />
-            <Skeleton className="w-full h-[46px]" />
-          </div>
-          <Skeleton className="w-[150px] h-[46px]" />
+      <Skeleton className="mb-[22px] h-6 w-[90px]" />
+      <section className="section-panel overflow-visible rounded-lg border border-border bg-card p-[20px_22px_22px] max-sm:p-4">
+        <Skeleton className="h-3 w-[620px] max-w-full" />
+        <div className="mt-5 flex flex-wrap items-center gap-3 border-b border-border pb-4">
+          <Skeleton className="h-10 min-w-[220px] flex-1" />
+          <Skeleton className="h-10 w-[150px]" />
         </div>
-        <div
-          className="team-list grid grid-cols-[repeat(auto-fill,minmax(min(100%,250px),1fr))] gap-[14px] mt-5"
-          aria-hidden="true"
-        >
+        <div className="mt-4 overflow-hidden rounded-lg border border-border">
+          <div
+            className="grid grid-cols-[2fr_1fr_1fr_100px] gap-4 bg-soft px-4 py-3 max-md:grid-cols-[2fr_1fr_100px]"
+            aria-hidden="true"
+          >
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="ml-auto h-3 w-16" />
+          </div>
           {Array.from({ length: 6 }, (_, index) => (
             <div
-              className="team-card-skeleton grid grid-cols-[38px_1fr] items-center gap-[6px_12px] min-h-[78px] p-4 border border-border rounded-lg bg-background"
+              className="grid grid-cols-[2fr_1fr_1fr_100px] items-center gap-4 border-t border-border px-4 py-4 max-md:grid-cols-[2fr_1fr_100px]"
               key={index}
             >
-              <Skeleton className="team-mark-skeleton row-span-2 w-[38px] h-[38px] rounded-full" />
-              <Skeleton className="w-[120px] max-w-full h-3.5" />
-              <Skeleton className="w-[80px] max-w-full h-3" />
+              <Skeleton className="h-3.5 w-40 max-w-full" />
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="ml-auto h-8 w-8" />
             </div>
           ))}
         </div>
