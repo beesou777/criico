@@ -7,6 +7,7 @@ import { LoaderCircle, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { roles, type Player, type Team } from '@/lib/contracts';
 import { submitJSON } from '@/lib/client-api';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 
 export function PlayerForm({
   player,
@@ -17,21 +18,16 @@ export function PlayerForm({
 }) {
   const [pending, setPending] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const router = useRouter();
 
   async function handleDelete() {
     if (!player) return;
-    if (
-      !window.confirm(
-        `Are you sure you want to remove ${player.name} from the squad?`,
-      )
-    ) {
-      return;
-    }
     setDeleting(true);
     try {
       await submitJSON(`/api/players/${player.id}`, 'DELETE', {});
       toast.success(`${player.name} removed from your squad.`);
+      setDeleteDialogOpen(false);
       router.push('/dashboard/players');
       router.refresh();
     } catch (cause) {
@@ -232,7 +228,7 @@ export function PlayerForm({
             type="button"
             className="button button-danger inline-flex justify-center items-center gap-2 min-h-[47px] p-[12px_22px] font-semibold border border-transparent rounded-[4px] bg-[#a91230] text-white hover:bg-[#8f0f29] transition-colors text-xs cursor-pointer"
             disabled={pending || deleting}
-            onClick={handleDelete}
+            onClick={() => setDeleteDialogOpen(true)}
           >
             {deleting ? (
               <LoaderCircle className="animate-spin" size={18} />
@@ -261,6 +257,17 @@ export function PlayerForm({
           {pending ? 'Saving…' : player ? 'Save changes' : 'Add to squad'}
         </button>
       </div>
+      {player ? (
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          title="Remove this player?"
+          description={`Are you sure you want to remove ${player.name} from the squad?`}
+          confirmLabel="Remove player"
+          pending={deleting}
+          onConfirm={handleDelete}
+          onClose={() => setDeleteDialogOpen(false)}
+        />
+      ) : null}
     </form>
   );
 }
