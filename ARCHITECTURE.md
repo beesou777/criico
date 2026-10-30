@@ -19,6 +19,94 @@ flowchart TD
     Services --> Database[(PostgreSQL via pg)]
 ```
 
+## Database schema and relationships
+
+The database is relational PostgreSQL. Every application record is scoped to an
+organizer through `ownerId`, which is the authenticated user's ID. The main
+relationships are:
+
+```mermaid
+erDiagram
+    users ||--o{ teams : owns
+    users ||--o{ players : owns
+    users ||--o{ matches : owns
+    teams ||--o{ players : contains
+    teams ||--o{ matches : participates_in
+    matches ||--o{ performances : records
+    players ||--o{ performances : has
+
+    users {
+        uuid id PK
+        text email UK
+        text passwordHash
+        timestamp createdAt
+    }
+
+    teams {
+        uuid id PK
+        uuid ownerId FK
+        text name
+        timestamp disbandedAt
+    }
+
+    players {
+        uuid id PK
+        uuid ownerId FK
+        uuid teamId FK
+        text name
+        text role
+        numeric basePrice
+        integer matchesPlayed
+        integer totalRuns
+        integer totalWickets
+        timestamp updatedAt
+    }
+
+    matches {
+        uuid id PK
+        uuid ownerId FK
+        uuid teamAId FK
+        uuid teamBId FK
+        text teamA
+        text teamB
+        text result
+        date playedAt
+        text submissionKey
+        text payloadHash
+        timestamp createdAt
+    }
+
+    performances {
+        uuid matchId FK
+        uuid playerId FK
+        text teamSide
+        integer runs
+        integer wickets
+    }
+```
+
+### Table responsibilities
+
+| Table | Purpose | Important relationships |
+| --- | --- | --- |
+| `users` | Organizer accounts and password hashes | One user owns teams, players, and matches |
+| `teams` | Organizer-owned cricket teams | A team contains many players and can participate in matches |
+| `players` | Roster members and career totals | A player belongs to an owner and optionally a team |
+| `matches` | Completed match metadata | A match belongs to an owner and references two teams |
+| `performances` | Per-player match statistics | Joins one match to one player with runs, wickets, and team side |
+
+`performances` is the linking table between `matches` and `players`. This keeps
+historical match data separate from the denormalized career totals stored on
+`players`. When a match is recorded, the application inserts the match,
+inserts its performances, and increments the affected players' career totals
+inside one transaction.
+
+The application also keeps the team names on `matches` as historical display
+values. That means a later team rename does not change how an old match is
+displayed. `submissionKey` and `payloadHash` make retries safe: an identical
+retry returns the existing match, while the same key with different data is
+rejected.
+
 ## Authentication
 
 Registration uses a Server Action and the same credential schema as API registration/login: at least eight characters, at most 72 UTF-8 bytes. A bcrypt hash is stored, never the password. JWTs are signed with a required random environment secret and expire in eight hours. They are returned only in an HTTP-only cookie, never JSON or localStorage. The cookie is Secure in production and SameSite=Lax.
@@ -62,13 +150,3 @@ The public homepage uses the approved cricket ground, cream/forest palette, crim
 pnpm test runs database-independent tests by default. Database-writing integration tests are opt-in via a dedicated TEST_DATABASE_URL and reject the configured application database. They invoke route handlers directly; they are not browser end-to-end tests. The read-only database check is separately opt-in.
 
 Production build and deployment require separate verification. No build has been run during this fix task.
-
-## Mandatory 3?5 minute video
-
-1. Show the unified Next.js structure, schema, and why PostgreSQL fits.
-2. Explain cookie-based JWT handling, middleware, and owner checks.
-3. Walk through the score function and boundary tests.
-4. Demonstrate the timestamp precision or date-only bug and regression test.
-5. Record a match and show updated career totals, ranked scores, and pagination.
-
-Before public submission: rotate the previously exposed database credential at the provider, address exposed Git history, verify deployment, add the live URL/Loom link, and commit genuine completed changes. Do not claim measured coverage or checks that were not executed.
