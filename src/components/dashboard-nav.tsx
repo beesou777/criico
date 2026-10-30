@@ -10,6 +10,7 @@ import {
   NotebookPen,
   LogOut,
   LoaderCircle,
+  Settings,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -22,6 +23,7 @@ const links = [
   { href: '/dashboard/teams', label: 'Teams', icon: Shield },
   { href: '/dashboard/matches', label: 'Matchbook', icon: NotebookPen },
   { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
+  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
 export function DashboardNav() {

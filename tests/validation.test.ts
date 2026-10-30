@@ -4,6 +4,7 @@ import {
   matchSchema,
   playerSchema,
   credentialsSchema,
+  accountUpdateSchema,
   cricketToday,
 } from '../src/lib/validation';
 
@@ -137,5 +138,18 @@ describe('Validation Boundaries', () => {
         password: 'securePassword123',
       }).email,
     ).toBe('organizer@criico.com');
+  });
+
+  it('requires the current password when changing an account password', () => {
+    expect(
+      accountUpdateSchema.safeParse({ newPassword: 'newPassword123' }).success,
+    ).toBe(false);
+    expect(
+      accountUpdateSchema.safeParse({
+        organizationName: 'Kathmandu Cricket Club',
+        currentPassword: 'oldPassword123',
+        newPassword: 'newPassword123',
+      }).success,
+    ).toBe(true);
   });
 });

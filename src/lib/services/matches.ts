@@ -116,7 +116,7 @@ export async function recordMatch(
     await client.query('BEGIN');
 
     const teamsRes = await client.query<{ id: string; name: string }>(
-      'SELECT id, name FROM teams WHERE "ownerId" = $1 AND name = ANY($2::text[])',
+      'SELECT id, name FROM teams WHERE "ownerId" = $1 AND "disbandedAt" IS NULL AND name = ANY($2::text[])',
       [ownerId, [input.teamA, input.teamB]],
     );
     if (teamsRes.rows.length !== 2) {

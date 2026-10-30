@@ -20,6 +20,7 @@ export class ServiceError extends Error {
 export interface UserRecord {
   id: string;
   email: string;
+  organizationName: string;
   createdAt: string;
 }
 
@@ -40,6 +41,7 @@ export interface TeamRecord {
   id: string;
   name: string;
   playerCount: number;
+  disbandedAt?: string | null;
 }
 
 export interface RankedPlayerRecord extends PlayerRecord {

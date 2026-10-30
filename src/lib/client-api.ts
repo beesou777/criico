@@ -1,7 +1,7 @@
 import { errorMessage } from './contracts';
 export async function submitJSON(
   path: string,
-  method: 'POST' | 'PUT' | 'DELETE',
+  method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   input?: unknown,
 ) {
   let response: Response;

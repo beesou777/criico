@@ -4,6 +4,7 @@ import { getSessionUser } from './session';
 import { getLeaderboard, getPlayers, getPlayerById } from './services/players';
 import { getMatches, getMatchById } from './services/matches';
 import { getPlayerOptions, getTeams } from './services/teams';
+import { getAccount } from './services/auth';
 import { getDashboardOverview } from './services/dashboard';
 import type { PaginationInput, PlayerListQuery } from './pagination';
 
@@ -32,9 +33,15 @@ export async function authenticatedPlayerOptions() {
   const user = await requireSessionUser();
   return getPlayerOptions(user.id);
 }
-export async function authenticatedTeams() {
+export async function authenticatedTeams(options?: {
+  includeDisbanded?: boolean;
+}) {
   const user = await requireSessionUser();
-  return getTeams(user.id);
+  return getTeams(user.id, options);
+}
+export async function authenticatedAccount() {
+  const user = await requireSessionUser();
+  return getAccount(user.id);
 }
 export async function authenticatedMatch(id: string) {
   const user = await requireSessionUser();

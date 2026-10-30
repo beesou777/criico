@@ -21,8 +21,10 @@ async function runMigration() {
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         email varchar(254) NOT NULL UNIQUE,
         "passwordHash" varchar NOT NULL,
+        "organizationName" varchar(80) NOT NULL DEFAULT 'Grassroots Cricket Manager',
         "createdAt" timestamptz NOT NULL DEFAULT now()
       );
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS "organizationName" varchar(80) NOT NULL DEFAULT 'Grassroots Cricket Manager';
     `);
 
     await client.query(`
@@ -66,9 +68,11 @@ async function runMigration() {
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         "ownerId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         name varchar(80) NOT NULL,
+        "disbandedAt" timestamptz,
         "createdAt" timestamptz NOT NULL DEFAULT now(),
         UNIQUE ("ownerId", name)
       );
+      ALTER TABLE teams ADD COLUMN IF NOT EXISTS "disbandedAt" timestamptz;
       ALTER TABLE players ADD COLUMN IF NOT EXISTS "teamId" uuid REFERENCES teams(id) ON DELETE SET NULL;
       CREATE INDEX IF NOT EXISTS players_team ON players ("teamId");
       CREATE INDEX IF NOT EXISTS players_owner_team_idx ON players ("ownerId", "teamId");

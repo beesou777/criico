@@ -36,6 +36,27 @@ export const credentialsSchema = z
   })
   .strict();
 
+export const accountUpdateSchema = z
+  .object({
+    organizationName: z
+      .string()
+      .trim()
+      .min(2, 'Organization name must have at least 2 characters.')
+      .max(80)
+      .optional(),
+    currentPassword: z.string().min(1).optional(),
+    newPassword: z
+      .string()
+      .min(8, 'Use at least 8 characters.')
+      .max(72, 'Use at most 72 characters.')
+      .optional(),
+  })
+  .strict()
+  .refine((value) => !value.newPassword || Boolean(value.currentPassword), {
+    path: ['currentPassword'],
+    message: 'Enter your current password to set a new password.',
+  });
+
 export const playerSchema = z
   .object({
     name: z

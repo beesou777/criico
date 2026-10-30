@@ -11,7 +11,7 @@ export async function createUser(
     const res = await query<UserRecord>(
       `INSERT INTO users (email, "passwordHash")
        VALUES ($1, $2)
-       RETURNING id, email, "createdAt"`,
+       RETURNING id, email, "organizationName", "createdAt"`,
       [email.toLowerCase().trim(), passwordHash],
     );
     const user = res.rows[0];
@@ -39,9 +39,10 @@ export async function authenticateUser(
     id: string;
     email: string;
     passwordHash: string;
+    organizationName: string;
     createdAt: Date;
   }>(
-    `SELECT id, email, "passwordHash", "createdAt" FROM users WHERE email = $1`,
+    `SELECT id, email, "passwordHash", "organizationName", "createdAt" FROM users WHERE email = $1`,
     [normalizedEmail],
   );
 
@@ -61,6 +62,67 @@ export async function authenticateUser(
   return {
     id: user.id,
     email: user.email,
+    organizationName: user.organizationName,
     createdAt: user.createdAt.toISOString(),
   };
+}
+
+export async function getAccount(ownerId: string): Promise<UserRecord | null> {
+  const res = await query<{
+    id: string;
+    email: string;
+    organizationName: string;
+    createdAt: Date;
+  }>(
+    'SELECT id, email, "organizationName", "createdAt" FROM users WHERE id = $1',
+    [ownerId],
+  );
+  const account = res.rows[0];
+  if (!account) return null;
+  return {
+    id: account.id,
+    email: account.email,
+    organizationName: account.organizationName,
+    createdAt: account.createdAt.toISOString(),
+  };
+}
+
+export async function updateAccount(
+  ownerId: string,
+  input: {
+    organizationName?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  },
+): Promise<UserRecord> {
+  const account = await query<{ email: string; passwordHash: string }>(
+    'SELECT email, "passwordHash" FROM users WHERE id = $1',
+    [ownerId],
+  );
+  const current = account.rows[0];
+  if (!current) throw new ServiceError(404, 'Account not found.');
+
+  if (input.newPassword) {
+    const valid = await bcrypt.compare(
+      input.currentPassword ?? '',
+      current.passwordHash,
+    );
+    if (!valid) throw new ServiceError(400, 'Current password is incorrect.');
+    const passwordHash = await bcrypt.hash(input.newPassword, 12);
+    await query('UPDATE users SET "passwordHash" = $1 WHERE id = $2', [
+      passwordHash,
+      ownerId,
+    ]);
+  }
+
+  if (input.organizationName) {
+    await query('UPDATE users SET "organizationName" = $1 WHERE id = $2', [
+      input.organizationName.trim(),
+      ownerId,
+    ]);
+  }
+
+  const updated = await getAccount(ownerId);
+  if (!updated) throw new ServiceError(500, 'Could not update account.');
+  return updated;
 }
