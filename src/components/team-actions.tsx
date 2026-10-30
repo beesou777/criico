@@ -1,6 +1,6 @@
 'use client';
 
-import { RotateCcw, ShieldOff, Trash2, X } from 'lucide-react';
+import { MoreHorizontal, RotateCcw, ShieldOff, X } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { submitJSON } from '@/lib/client-api';
@@ -16,26 +16,31 @@ export function TeamActions({
   playerCount: number;
   disbanded: boolean;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [dialog, setDialog] = useState<'edit' | 'disband' | null>(null);
+  const [name, setName] = useState(teamName);
   const [pending, setPending] = useState(false);
-  const [open, setOpen] = useState(false);
-  const permanentDelete = !disbanded && playerCount === 0;
 
-  async function updateTeam() {
+  async function submit(action: 'edit' | 'disband' | 'restore') {
     setPending(true);
     try {
-      await submitJSON(
-        `/api/teams/${teamId}`,
-        disbanded ? 'PATCH' : 'DELETE',
-        {},
-      );
+      if (action === 'edit')
+        await submitJSON(`/api/teams/${teamId}`, 'PUT', { name: name.trim() });
+      else
+        await submitJSON(
+          `/api/teams/${teamId}`,
+          action === 'restore' ? 'PATCH' : 'DELETE',
+          {},
+        );
       toast.success(
-        disbanded
-          ? `${teamName} restored.`
-          : permanentDelete
-            ? `${teamName} deleted.`
+        action === 'edit'
+          ? 'Team name updated.'
+          : action === 'restore'
+            ? `${teamName} restored.`
             : `${teamName} disbanded.`,
       );
-      setOpen(false);
+      setDialog(null);
+      setMenuOpen(false);
       window.location.reload();
     } catch (error) {
       toast.error(
@@ -47,38 +52,53 @@ export function TeamActions({
   }
 
   return (
-    <>
+    <div className="relative inline-flex justify-end">
       <button
         type="button"
-        onClick={() => (disbanded ? updateTeam() : setOpen(true))}
-        disabled={pending}
-        className="inline-flex items-center gap-1.5 rounded border border-border bg-card px-2.5 py-1.5 text-[10px] font-semibold text-secondary transition-colors hover:border-accent hover:text-accent disabled:cursor-wait disabled:opacity-60"
+        aria-label={`Actions for ${teamName}`}
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen((value) => !value)}
+        className="grid h-8 w-8 place-items-center rounded-md text-secondary hover:bg-soft hover:text-foreground"
       >
-        {disbanded ? (
-          <RotateCcw size={13} />
-        ) : permanentDelete ? (
-          <Trash2 size={13} />
-        ) : (
-          <ShieldOff size={13} />
-        )}
-        {pending
-          ? 'Updating...'
-          : disbanded
-            ? 'Restore'
-            : permanentDelete
-              ? 'Delete'
-              : 'Disband'}
+        <MoreHorizontal size={18} />
       </button>
-      {!disbanded && open && (
+      {menuOpen && (
+        <div className="absolute right-0 top-9 z-20 min-w-36 rounded-lg border border-border bg-card p-1.5 text-left shadow-lg">
+          {!disbanded && (
+            <button
+              type="button"
+              onClick={() => {
+                setDialog('edit');
+                setMenuOpen(false);
+              }}
+              className="flex w-full items-center gap-2 rounded px-2.5 py-2 text-xs text-foreground hover:bg-soft"
+            >
+              Edit team name
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setDialog('disband');
+              setMenuOpen(false);
+            }}
+            className="flex w-full items-center gap-2 rounded px-2.5 py-2 text-xs text-foreground hover:bg-soft"
+          >
+            {disbanded ? <RotateCcw size={14} /> : <ShieldOff size={14} />}
+            {disbanded ? 'Restore team' : 'Disband team'}
+          </button>
+        </div>
+      )}
+      {dialog && (
         <div
           className="fixed inset-0 z-50 grid place-items-center bg-[#24151a]/45 p-4"
           role="presentation"
           onMouseDown={(event) =>
-            event.target === event.currentTarget && setOpen(false)
+            event.target === event.currentTarget && setDialog(null)
           }
         >
           <section
-            className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-2xl"
+            className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-left shadow-2xl"
             role="dialog"
             aria-modal="true"
             aria-labelledby="team-dialog-title"
@@ -92,49 +112,79 @@ export function TeamActions({
                   id="team-dialog-title"
                   className="mt-1 text-lg font-bold text-foreground"
                 >
-                  {permanentDelete
-                    ? 'Delete team permanently?'
-                    : 'Disband this team?'}
+                  {dialog === 'edit'
+                    ? 'Edit team name'
+                    : disbanded
+                      ? 'Restore this team?'
+                      : 'Disband this team?'}
                 </h2>
               </div>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={() => setDialog(null)}
                 className="rounded-md p-1 text-secondary hover:bg-soft hover:text-foreground"
                 aria-label="Close dialog"
               >
                 <X size={18} />
               </button>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-secondary">
-              {permanentDelete
-                ? `${teamName} has no players and can be removed permanently. This cannot be undone.`
-                : `${teamName} has players or records. Disbanding hides it from active workflows while preserving its roster and match history.`}
-            </p>
+            {dialog === 'edit' ? (
+              <label className="mt-5 block text-xs font-semibold text-foreground">
+                Team name
+                <input
+                  autoFocus
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  maxLength={80}
+                  className="mt-2 min-h-11 w-full rounded-md border border-border bg-background px-3 text-sm"
+                />
+              </label>
+            ) : (
+              <p className="mt-4 text-sm leading-relaxed text-secondary">
+                {disbanded
+                  ? `${teamName} will become available in active team workflows again.`
+                  : `${teamName} will be hidden from active workflows. Its players and match history will be preserved.`}
+              </p>
+            )}
             <div className="mt-6 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={() => setDialog(null)}
                 className="rounded-md border border-border px-3 py-2 text-xs font-semibold text-secondary hover:bg-soft"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={updateTeam}
-                disabled={pending}
+                onClick={() =>
+                  submit(
+                    dialog === 'edit'
+                      ? 'edit'
+                      : disbanded
+                        ? 'restore'
+                        : 'disband',
+                  )
+                }
+                disabled={
+                  pending || (dialog === 'edit' && name.trim().length < 2)
+                }
                 className="rounded-md bg-accent px-3 py-2 text-xs font-semibold text-white hover:brightness-95 disabled:opacity-60"
               >
                 {pending
                   ? 'Working...'
-                  : permanentDelete
-                    ? 'Delete team'
-                    : 'Disband team'}
+                  : dialog === 'edit'
+                    ? 'Save changes'
+                    : disbanded
+                      ? 'Restore team'
+                      : 'Disband team'}
               </button>
             </div>
           </section>
         </div>
       )}
-    </>
+      <span className="sr-only">
+        {playerCount} {playerCount === 1 ? 'player' : 'players'}
+      </span>
+    </div>
   );
 }

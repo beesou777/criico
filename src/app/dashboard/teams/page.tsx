@@ -28,8 +28,8 @@ export default async function TeamsPage() {
       <section className="team-panel section-panel bg-card border border-border rounded-lg overflow-hidden p-[20px_22px_22px] max-sm:p-4">
         <TeamForm />
         <p className="mt-4 text-xs leading-relaxed text-secondary">
-          Empty teams can be deleted permanently. Teams with players or match
-          history can be disbanded and restored later without losing records.
+          Disbanding is reversible and preserves players and match history. The
+          team remains available in this table so it can be restored later.
         </p>
         {teams.length ? (
           <div className="mt-5 overflow-x-auto rounded-lg border border-border">
@@ -47,9 +47,7 @@ export default async function TeamsPage() {
               <tbody className="divide-y divide-border">
                 {teams.map((team) => (
                   <tr
-                    className={
-                      team.disbandedAt ? 'bg-soft/40' : 'bg-background'
-                    }
+                    className={team.disbandedAt ? 'bg-soft/40' : 'bg-card'}
                     key={team.id}
                   >
                     <td className="px-4 py-3">
