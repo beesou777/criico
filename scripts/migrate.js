@@ -166,7 +166,7 @@ async function runMigration() {
   } catch (err) {
     console.error(
       'Migration failed:',
-      err instanceof Error ? err.name : 'UnknownError',
+      err instanceof Error ? err.message : 'Unknown error',
     );
     process.exitCode = 1;
   } finally {

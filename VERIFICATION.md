@@ -31,6 +31,6 @@ Local screenshots are saved under `.impeccable/review/` (development artifacts, 
 
 The dedicated-database route integration suite was not executed because TEST_DATABASE_URL was not configured. Its guard prevents accidental use of the application database. Mocked service tests cover stale timestamp rejection, rollback on unavailable participants, and historical-record deletion protection; browser checks additionally exercised real successful edits and match writes.
 
-At the user's explicit request, local `.env` uses DATABASE_SSL_VERIFY=false. Encryption remains enabled. Production refuses this exception and needs a trusted provider certificate configuration.
+The assignment database connection uses encrypted transport with certificate verification disabled for provider compatibility.
 
 The local published/weak signing key was regenerated, invalidating old sessions. The previously committed database password cannot be revoked by editing source files; rotate it at the provider and address exposed Git history separately. No history rewrite, force push, seed run, schema migration, production build, or deployment was performed during this task.

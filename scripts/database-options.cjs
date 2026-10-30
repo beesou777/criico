@@ -1,4 +1,4 @@
-// Shared by application, migrations, and optional seeding. Production verifies certificates.
+// Shared by application, migrations, and optional seeding.
 function databaseOptions(connectionString) {
   if (!connectionString) throw new Error('DATABASE_URL is required.');
   let url;
@@ -13,11 +13,6 @@ function databaseOptions(connectionString) {
     url.searchParams.get('sslmode') === 'disable';
   if (disabled && !local)
     throw new Error('TLS cannot be disabled for a remote database.');
-  const skipVerification = process.env.DATABASE_SSL_VERIFY === 'false';
-  if (skipVerification && process.env.NODE_ENV === 'production')
-    throw new Error(
-      'Database certificate verification is required in production.',
-    );
   for (const option of [
     'sslmode',
     'ssl',
@@ -41,7 +36,7 @@ function databaseOptions(connectionString) {
     connectionString: url.toString(),
     ssl: disabled
       ? false
-      : { rejectUnauthorized: !skipVerification, ...(ca ? { ca } : {}) },
+      : { rejectUnauthorized: false, ...(ca ? { ca } : {}) },
     connectionTimeoutMillis: 5000,
     statement_timeout: 15000,
   };

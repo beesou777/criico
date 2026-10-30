@@ -25,7 +25,7 @@ Registration uses a Server Action and the same credential schema as API registra
 
 Middleware protects dashboard navigation; server data helpers and API routes independently verify sessions. All services scope queries by the authenticated owner ID. Browser mutations require a matching Origin; server actions additionally use Next.js's built-in origin checking. Authentication attempts are limited per normalized email within each Node process; multi-instance production needs an atomic shared rate-limit store.
 
-Database connections verify TLS certificates by default. Local development may explicitly disable TLS only for loopback PostgreSQL. The user requested a local DATABASE_SSL_VERIFY=false exception: it retains encryption while skipping certificate verification and is rejected in production. Provider CA certificates can be configured through DATABASE_CA_CERT or DATABASE_CA_CERT_FILE.
+Database connections use encrypted TLS transport. Certificate verification is disabled for compatibility with the assignment database provider.
 
 ## Tables and transactions
 

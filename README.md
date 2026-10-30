@@ -15,7 +15,7 @@ Next.js 15, React, strict TypeScript, Tailwind CSS, Plus Jakarta Sans, PostgreSQ
 5. Run pnpm dev and open http://127.0.0.1:3100.
 6. Register an organizer account; each organizer manages their own data.
 
-Never put real passwords, JWT signing secrets, or database connection strings in tracked files. Production requires verified database TLS; configure DATABASE_CA_CERT with the provider's PEM certificate or DATABASE_CA_CERT_FILE with its local path when needed. DATABASE_SSL=false is allowed only for local PostgreSQL. The user-requested DATABASE_SSL_VERIFY=false exception skips certificate verification during local development while keeping encryption; it is refused in production.
+Never put real passwords, JWT signing secrets, or database connection strings in tracked files. Database connections use encrypted transport, but certificate verification is disabled for this assignment's hosted database compatibility.
 
 Optional pnpm db:seed resets the configured showcase account's roster and match data. Set SEED_EMAIL and SEED_PASSWORD locally; no default login credential is published. Do not run seeding against an account whose records should be preserved.
 Set SEED_ORGANIZATION_NAME to customize the organization name shown in the seeded dashboard; it defaults to Grassroots Cricket Manager.
