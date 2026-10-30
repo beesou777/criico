@@ -142,8 +142,8 @@ export function TeamActions({
             ) : (
               <p className="mt-4 text-sm leading-relaxed text-secondary">
                 {disbanded
-                  ? `${teamName} will become available in active team workflows again.`
-                  : `${teamName} will be hidden from active workflows. Its players and match history will be preserved.`}
+                  ? `Are you sure you want to restore ${teamName}?`
+                  : `Are you sure you want to disband ${teamName}?`}
               </p>
             )}
             <div className="mt-6 flex justify-end gap-2">
