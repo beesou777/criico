@@ -36,6 +36,16 @@ export const credentialsSchema = z
   })
   .strict();
 
+export const registrationSchema = credentialsSchema
+  .extend({
+    organizationName: z
+      .string()
+      .trim()
+      .min(2, 'Organization name must have at least 2 characters.')
+      .max(80, 'Organization name must be 80 characters or fewer.'),
+  })
+  .strict();
+
 export const accountUpdateSchema = z
   .object({
     organizationName: z

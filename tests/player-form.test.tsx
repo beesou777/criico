@@ -27,9 +27,6 @@ describe('Player form validation', () => {
     expect(mocks.toastError).toHaveBeenCalledWith(
       'Total runs must be zero or greater.',
     );
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Total runs must be zero or greater.',
-    );
     expect(mocks.submitJSON).not.toHaveBeenCalled();
   });
 });

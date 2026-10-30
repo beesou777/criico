@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { credentialsSchema } from '@/lib/validation';
+import { registrationSchema } from '@/lib/validation';
 import {
   signSession,
   SESSION_COOKIE,
@@ -11,9 +11,13 @@ import { createUser } from '@/lib/services/auth';
 export async function POST(request: NextRequest) {
   try {
     requireSameOrigin(request);
-    const input = credentialsSchema.parse(await readJSON(request));
+    const input = registrationSchema.parse(await readJSON(request));
     limitAuth(input.email);
-    const user = await createUser(input.email, input.password);
+    const user = await createUser(
+      input.email,
+      input.password,
+      input.organizationName,
+    );
     const token = await signSession(user);
     const response = NextResponse.json(
       { user: { id: user.id, email: user.email } },

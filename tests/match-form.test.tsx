@@ -157,8 +157,6 @@ describe('MatchForm UI & Validation Tests', () => {
       'Total runs must be zero or greater.',
     );
 
-    // Expect inline error and no API call
-    expect(screen.getByText(/must be ≥ 0/i)).toBeInTheDocument();
     expect(mocks.submitJSON).not.toHaveBeenCalled();
   });
 

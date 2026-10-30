@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { createUser } from '@/lib/services/auth';
 import { ServiceError } from '@/lib/services/shared';
-import { credentialsSchema } from '@/lib/validation';
+import { registrationSchema } from '@/lib/validation';
 import { limitAuth } from '@/lib/rate-limit';
 import { HttpError } from '@/lib/http';
 
@@ -13,9 +13,10 @@ export async function registerAction(
   _previous: RegistrationState,
   form: FormData,
 ): Promise<RegistrationState> {
-  const input = credentialsSchema.safeParse({
+  const input = registrationSchema.safeParse({
     email: form.get('email'),
     password: form.get('password'),
+    organizationName: form.get('organizationName'),
   });
 
   if (!input.success) {
@@ -28,7 +29,11 @@ export async function registerAction(
 
   try {
     limitAuth(input.data.email);
-    await createUser(input.data.email, input.data.password);
+    await createUser(
+      input.data.email,
+      input.data.password,
+      input.data.organizationName,
+    );
   } catch (error) {
     return {
       error:

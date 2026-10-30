@@ -74,11 +74,6 @@ const PerformanceRow = memo(function PerformanceRow({
           aria-label={`Runs scored by ${player.name}`}
           aria-invalid={hasNegativeRuns}
         />
-        {hasNegativeRuns && (
-          <span className="inline-stat-error" role="alert">
-            Must be ≥ 0
-          </span>
-        )}
       </td>
       <td className="performance-stat-cell" data-label="Wickets">
         <label className="sr-only" htmlFor={`wickets-${player.id}`}>
@@ -103,16 +98,6 @@ const PerformanceRow = memo(function PerformanceRow({
           aria-label={`Wickets taken by ${player.name}`}
           aria-invalid={hasNegativeWickets}
         />
-        {hasNegativeWickets && (
-          <span className="inline-stat-error" role="alert">
-            Must be ≥ 0
-          </span>
-        )}
-        {hasTooManyWickets && (
-          <span className="inline-stat-error" role="alert">
-            Maximum 10 per match
-          </span>
-        )}
       </td>
       <td className="performance-remove-cell" data-label="Remove">
         <button

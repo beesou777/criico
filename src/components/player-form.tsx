@@ -17,7 +17,6 @@ export function PlayerForm({
 }) {
   const [pending, setPending] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleDelete() {
@@ -38,7 +37,6 @@ export function PlayerForm({
     } catch (cause) {
       const text =
         cause instanceof Error ? cause.message : 'Could not delete player.';
-      setError(text);
       toast.error(text);
     } finally {
       setDeleting(false);
@@ -47,7 +45,6 @@ export function PlayerForm({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
     const form = new FormData(event.currentTarget);
     const values = {
       name: String(form.get('name') ?? '').trim(),
@@ -75,7 +72,6 @@ export function PlayerForm({
     )
       message = 'Career statistics must be whole numbers up to 10,000,000.';
     if (message) {
-      setError(message);
       toast.error(message);
       return;
     }
@@ -93,7 +89,6 @@ export function PlayerForm({
     } catch (cause) {
       const text =
         cause instanceof Error ? cause.message : 'Could not save player.';
-      setError(text);
       toast.error(text);
     } finally {
       setPending(false);
@@ -231,14 +226,6 @@ export function PlayerForm({
           </label>
         </div>
       </fieldset>
-      {error && (
-        <p
-          role="alert"
-          className="notice error text-xs bg-[#fae8eb] border border-[#f1c3cb] p-[13px_16px] rounded-[4px] text-[#a01131] mb-5 font-semibold"
-        >
-          {error}
-        </p>
-      )}
       <div className="form-actions flex justify-end gap-[14px] mt-[25px] max-md:justify-between items-center">
         {player && (
           <button

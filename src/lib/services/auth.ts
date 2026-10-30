@@ -5,14 +5,15 @@ import { isUniqueViolation, ServiceError, type UserRecord } from './shared';
 export async function createUser(
   email: string,
   password: string,
+  organizationName = 'Grassroots Cricket Manager',
 ): Promise<UserRecord> {
   const passwordHash = await bcrypt.hash(password, 12);
   try {
     const res = await query<UserRecord>(
-      `INSERT INTO users (email, "passwordHash")
-       VALUES ($1, $2)
+      `INSERT INTO users (email, "passwordHash", "organizationName")
+       VALUES ($1, $2, $3)
        RETURNING id, email, "organizationName", "createdAt"`,
-      [email.toLowerCase().trim(), passwordHash],
+      [email.toLowerCase().trim(), passwordHash, organizationName.trim()],
     );
     const user = res.rows[0];
     if (!user) {

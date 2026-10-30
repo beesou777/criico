@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState, type FormEvent } from 'react';
+import { useActionState, useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Eye, EyeOff, LoaderCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,14 +18,12 @@ export function AuthForm({
     error: null,
   });
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
   const isRegister = mode === 'register';
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
-    setError(null);
     const form = new FormData(event.currentTarget);
     try {
       await submitJSON('/api/auth/login', 'POST', {
@@ -36,7 +34,6 @@ export function AuthForm({
     } catch (cause) {
       const message =
         cause instanceof Error ? cause.message : 'Sign in failed.';
-      setError(message);
       toast.error(message);
     } finally {
       setPending(false);
@@ -44,6 +41,10 @@ export function AuthForm({
   }
 
   const busy = pending || registering;
+
+  useEffect(() => {
+    if (state.error) toast.error(state.error);
+  }, [state.error]);
 
   return (
     <>
@@ -61,6 +62,20 @@ export function AuthForm({
         onSubmit={isRegister ? undefined : login}
         className="form-stack grid gap-5"
       >
+        {isRegister && (
+          <label className="flex flex-col gap-2 text-xs font-semibold text-foreground">
+            Squad or organization name
+            <input
+              name="organizationName"
+              autoComplete="organization"
+              required
+              minLength={2}
+              maxLength={80}
+              placeholder="e.g. Kathmandu Cricket Club"
+              className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
+            />
+          </label>
+        )}
         <label className="flex flex-col gap-2 text-xs font-semibold text-foreground">
           Email address
           <input
@@ -112,14 +127,6 @@ export function AuthForm({
               className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
             />
           </label>
-        )}
-        {(error || state.error) && (
-          <p
-            className="notice error text-xs bg-[#fae8eb] border border-[#f1c3cb] p-[13px_16px] rounded-[4px] text-[#a01131] font-semibold"
-            role="alert"
-          >
-            {error || state.error}
-          </p>
         )}
         <button
           className="button button-primary inline-flex justify-center items-center gap-4 min-h-[47px] p-[12px_22px] font-semibold border border-transparent rounded-[4px] leading-[1.4] transition-colors duration-200 whitespace-nowrap bg-accent text-white hover:bg-accent-hover text-sm w-full cursor-pointer"
