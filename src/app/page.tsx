@@ -134,21 +134,29 @@ export default async function HomePage() {
             <svg
               className="delivery-path absolute inset-0 w-full h-full z-[2] pointer-events-none fill-none max-md:hidden"
               viewBox="0 0 600 600"
-              aria-hidden="true"
+              role="img"
+              aria-label="Animated cricket ball delivery and hit into the field"
             >
               <path
-                className="trajectory fill-none stroke-[#fff9e9] stroke-2 [stroke-dasharray:5_7]"
-                d="M290 390 Q345 205 485 320"
+                className="trajectory delivery-trajectory fill-none stroke-[#fff9e9] stroke-2 [stroke-dasharray:5_7]"
+                d="M288 350 Q290 70 290 295"
+              />
+              <path
+                className="trajectory hit-trajectory fill-none stroke-[#fff9e9] stroke-2 [stroke-dasharray:5_7]"
+                d="M290 195 Q370 155 500 215"
               />
               <g className="delivery-ball">
                 <animateMotion
-                  dur="1.8s"
+                  dur="3.6s"
                   begin="0s"
-                  repeatCount="2"
-                  fill="freeze"
-                  path="M290 390 Q345 205 485 320"
+                  repeatCount="indefinite"
+                  path="M288 370 Q290 270 290 195 Q370 155 500 215"
+                  keyPoints="0;0.43;0.43;1"
+                  keyTimes="0;0.36;0.48;1"
+                  calcMode="spline"
+                  keySplines=".2 .8 .3 1; .2 .8 .3 1; .2 .8 .3 1"
                 />
-                <circle r="8" fill="#DC143C" />
+                <circle r="8" fill="#dc143c" />
                 <path
                   d="M-2 -7 L2 7"
                   fill="none"
@@ -158,9 +166,6 @@ export default async function HomePage() {
                 />
               </g>
             </svg>
-            <div className="field-caption absolute bottom-[18px] right-[22px] z-[3] text-white bg-[#123d2be6] text-[9px] tracking-[0.16em] p-[7px_12px] uppercase font-bold max-md:text-[8px] max-md:bottom-3 max-md:right-[6%]">
-              Tundikhel · Kathmandu
-            </div>
           </div>
         </section>
         <section
