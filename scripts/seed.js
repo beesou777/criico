@@ -21,6 +21,9 @@ async function seed() {
 
     const email = process.env.SEED_EMAIL;
     const plainPassword = process.env.SEED_PASSWORD;
+    const organizationName = (
+      process.env.SEED_ORGANIZATION_NAME || 'Grassroots Cricket Manager'
+    ).trim();
     if (
       !email ||
       !plainPassword ||
@@ -30,20 +33,27 @@ async function seed() {
       throw new Error(
         'Set SEED_EMAIL and a valid SEED_PASSWORD (8 characters minimum, 72 UTF-8 bytes maximum).',
       );
+    if (organizationName.length < 2 || organizationName.length > 80)
+      throw new Error(
+        'SEED_ORGANIZATION_NAME must be between 2 and 80 characters.',
+      );
     const passwordHash = await bcrypt.hash(plainPassword, 12);
 
     // 1. Upsert Showcase User
     const userRes = await client.query(
-      `INSERT INTO users (email, "passwordHash")
-       VALUES ($1, $2)
+      `INSERT INTO users (email, "passwordHash", "organizationName")
+       VALUES ($1, $2, $3)
        ON CONFLICT (email)
-       DO UPDATE SET "passwordHash" = EXCLUDED."passwordHash"
-       RETURNING id, email`,
-      [email, passwordHash],
+       DO UPDATE SET "passwordHash" = EXCLUDED."passwordHash",
+                     "organizationName" = EXCLUDED."organizationName"
+       RETURNING id, email, "organizationName"`,
+      [email, passwordHash, organizationName],
     );
 
     const user = userRes.rows[0];
-    console.log(`Showcase user ready: ${user.email} (${user.id})`);
+    console.log(
+      `Showcase user ready: ${user.email} (${user.id}) — ${user.organizationName}`,
+    );
 
     // 2. Clean existing demo data
     // Use a transaction so failed seeding can be rolled back.
