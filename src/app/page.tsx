@@ -33,14 +33,6 @@ export default async function HomePage() {
           >
             Features
           </a>
-          {user && (
-            <Link
-              className="text-[13px] font-semibold text-foreground hover:text-accent transition-colors"
-              href="/dashboard"
-            >
-              Dashboard
-            </Link>
-          )}
         </nav>
         <div className="header-actions flex items-center gap-[26px] max-md:gap-[15px]">
           {user ? (
