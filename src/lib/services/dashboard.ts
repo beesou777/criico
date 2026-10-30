@@ -36,7 +36,7 @@ export async function getDashboardOverview(
   }>(
     `SELECT
        (SELECT count(*) FROM players WHERE "ownerId" = $1)::text AS "totalPlayers",
-       (SELECT count(*) FROM teams WHERE "ownerId" = $1)::text AS "totalTeams",
+       (SELECT count(*) FROM teams WHERE "ownerId" = $1 AND "disbandedAt" IS NULL)::text AS "totalTeams",
        (SELECT count(*) FROM matches WHERE "ownerId" = $1)::text AS "totalMatches",
        (SELECT COALESCE(sum("totalRuns"), 0) FROM players WHERE "ownerId" = $1)::text AS "totalRuns",
        (SELECT COALESCE(json_agg(item), '[]'::json) FROM (
@@ -84,7 +84,7 @@ export async function getDashboardSummary(
   }>(
     `SELECT
       (SELECT count(*) FROM players WHERE "ownerId" = $1)::text AS "totalPlayers",
-      (SELECT count(*) FROM teams WHERE "ownerId" = $1)::text AS "totalTeams",
+      (SELECT count(*) FROM teams WHERE "ownerId" = $1 AND "disbandedAt" IS NULL)::text AS "totalTeams",
       (SELECT count(*) FROM matches WHERE "ownerId" = $1)::text AS "totalMatches",
       (SELECT COALESCE(sum("totalRuns"), 0) FROM players WHERE "ownerId" = $1)::text AS "totalRuns"`,
     [ownerId],
