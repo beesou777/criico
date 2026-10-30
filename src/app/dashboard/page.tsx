@@ -126,7 +126,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
           {matches.length ? (
-            <MatchList matches={matches.slice(0, 3)} />
+            <MatchList matches={matches.slice(0, 4)} />
           ) : (
             <EmptyState
               title="A fresh matchbook."

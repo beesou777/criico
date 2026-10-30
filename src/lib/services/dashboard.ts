@@ -56,7 +56,7 @@ export async function getDashboardOverview(
                 matches."playedAt"::text AS "playedAt"
          FROM matches WHERE matches."ownerId" = $1
          ORDER BY matches."playedAt" DESC, matches."createdAt" DESC, matches.id DESC
-         LIMIT 3
+         LIMIT 4
        ) item) AS "recentMatches"`,
     [ownerId],
   );
