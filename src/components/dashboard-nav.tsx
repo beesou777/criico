@@ -31,7 +31,7 @@ export function DashboardNav() {
 
   return (
     <nav
-      className="dashboard-nav grid gap-[7px] max-md:flex max-md:gap-[5px] max-md:mt-5 max-md:overflow-x-auto max-md:pb-3"
+      className="dashboard-nav mt-8 grid gap-1.5 max-md:mt-5 max-md:flex max-md:gap-1.5 max-md:overflow-x-auto max-md:pb-3"
       aria-label="Clubhouse navigation"
     >
       {links.map(({ href, label, icon: Icon }) => {
@@ -44,8 +44,8 @@ export function DashboardNav() {
             prefetch={false}
             aria-current={active ? 'page' : undefined}
             className={clsx(
-              'flex items-center gap-[13px] p-[13px_12px] rounded-[5px] text-xs font-medium text-[#f2d6de] hover:bg-white/5 hover:text-white transition-colors max-md:p-[10px_12px] max-md:text-[10px] max-md:gap-[7px] max-md:whitespace-nowrap',
-              active ? 'bg-accent text-white font-bold' : '',
+              'flex min-h-11 items-center gap-3 rounded-md px-3 text-xs font-medium text-sidebar-text transition-colors hover:bg-white/10 hover:text-white max-md:min-h-9 max-md:px-2.5 max-md:text-[10px] max-md:gap-2 max-md:whitespace-nowrap',
+              active ? 'bg-accent font-bold text-white shadow-sm' : '',
             )}
           >
             <Icon className="w-[19px] h-[19px] max-md:w-4 max-md:h-4 shrink-0" />
@@ -62,7 +62,7 @@ export function LogoutButton() {
 
   return (
     <button
-      className="logout-button flex items-center gap-3 bg-transparent border-0 text-[#f2d6de] text-xs p-[14px_12px] w-full text-left border-t border-[#8d475b] cursor-pointer hover:text-white hover:bg-white/5 transition-colors max-md:border-0 max-md:p-[5px] max-md:text-[10px] max-md:gap-[7px]"
+      className="logout-button flex min-h-11 w-full items-center gap-3 border-0 bg-transparent px-3 text-left text-xs text-sidebar-text transition-colors hover:bg-white/10 hover:text-white max-md:min-h-9 max-md:px-2.5 max-md:text-[10px] max-md:gap-2"
       disabled={busy}
       onClick={async () => {
         setBusy(true);

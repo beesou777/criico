@@ -19,13 +19,13 @@ export default async function DashboardLayout({
 
   return (
     <div className="dashboard-shell flex min-h-dvh max-md:flex-col">
-      <aside className="sidebar w-[228px] shrink-0 bg-sidebar p-[34px_24px_24px] flex flex-col text-paper sticky top-0 h-dvh max-lg:w-[190px] max-lg:p-[30px_16px] max-md:w-full max-md:h-auto max-md:relative max-md:p-[19px_5%_0]">
+      <aside className="sidebar sticky top-0 flex h-dvh w-[228px] shrink-0 flex-col bg-sidebar p-[28px_20px_20px] text-paper max-lg:w-[210px] max-lg:p-[26px_16px_20px] max-md:relative max-md:h-auto max-md:w-full max-md:p-[19px_5%_0]">
         <Brand
           light
           className="p-[0_8px] text-[30px] max-md:p-0 max-md:text-[26px]"
         />
         <DashboardNav />
-        <div className="sidebar-bottom mt-auto pt-7.5 max-md:absolute max-md:top-4.25 max-md:right-[5%] max-md:p-0">
+        <div className="sidebar-bottom mt-auto border-t border-[#8d475b] pt-4 max-md:absolute max-md:right-[5%] max-md:top-4 max-md:border-0 max-md:p-0">
           <LogoutButton />
         </div>
       </aside>
