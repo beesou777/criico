@@ -63,7 +63,7 @@ export function TeamActions({
         <MoreHorizontal size={18} />
       </button>
       {menuOpen && (
-        <div className="absolute right-0 top-9 z-20 min-w-36 rounded-lg border border-border bg-card p-1.5 text-left shadow-lg">
+        <div className="absolute bottom-9 right-0 z-20 min-w-36 rounded-lg border border-border bg-card p-1.5 text-left shadow-lg">
           {!disbanded && (
             <button
               type="button"
