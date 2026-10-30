@@ -17,7 +17,10 @@ export default async function DashboardLayout({
   return (
     <div className="dashboard-shell flex min-h-dvh max-md:flex-col">
       <aside className="sidebar w-[228px] shrink-0 bg-sidebar p-[34px_24px_24px] flex flex-col text-paper sticky top-0 h-dvh max-lg:w-[190px] max-lg:p-[30px_16px] max-md:w-full max-md:h-auto max-md:relative max-md:p-[19px_5%_0]">
-        <Brand light className="p-[0_8px] text-[30px] max-md:p-0 max-md:text-[26px]" />
+        <Brand
+          light
+          className="p-[0_8px] text-[30px] max-md:p-0 max-md:text-[26px]"
+        />
         <DashboardNav />
         <div className="sidebar-bottom mt-auto pt-7.5 max-md:absolute max-md:top-4.25 max-md:right-[5%] max-md:p-0">
           <LogoutButton />
@@ -28,7 +31,7 @@ export default async function DashboardLayout({
           <span>Grassroots Cricket Manager</span>
           <div className="flex items-center gap-2 min-w-0">
             <span className="session-dot w-1.5 h-1.5 bg-[#397448] rounded-full shrink-0" />{' '}
-            <span className="account-email overflow-hidden text-ellipsis whitespace-nowrap max-w-[240px] max-lg:max-w-42.5 max-md:max-w-40">
+            <span className="account-email overflow-hidden text-ellipsis whitespace-nowrap max-w-60 max-lg:max-w-42.5 max-md:max-w-40">
               {session.email}
             </span>
           </div>

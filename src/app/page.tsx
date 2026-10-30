@@ -11,18 +11,33 @@ export default async function HomePage() {
     <>
       <header className="site-header h-[88px] flex items-center justify-between gap-[30px] px-[4%] border-b border-[#bec7b9] max-md:px-[6%] max-md:h-[75px] max-md:gap-[10px]">
         <Brand />
-        <nav className="flex items-center gap-[30px] ml-auto max-md:hidden" aria-label="Main navigation">
-          <a className="text-[13px] font-semibold text-foreground hover:text-accent transition-colors" href="#clubhouse">
+        <nav
+          className="flex items-center gap-[30px] ml-auto max-md:hidden"
+          aria-label="Main navigation"
+        >
+          <a
+            className="text-[13px] font-semibold text-foreground hover:text-accent transition-colors"
+            href="#clubhouse"
+          >
             The clubhouse
           </a>
-          <a className="text-[13px] font-semibold text-foreground hover:text-accent transition-colors" href="#how-it-works">
+          <a
+            className="text-[13px] font-semibold text-foreground hover:text-accent transition-colors"
+            href="#how-it-works"
+          >
             How it works
           </a>
-          <a className="text-[13px] font-semibold text-foreground hover:text-accent transition-colors" href="#features">
+          <a
+            className="text-[13px] font-semibold text-foreground hover:text-accent transition-colors"
+            href="#features"
+          >
             Features
           </a>
           {user && (
-            <Link className="text-[13px] font-semibold text-foreground hover:text-accent transition-colors" href="/dashboard">
+            <Link
+              className="text-[13px] font-semibold text-foreground hover:text-accent transition-colors"
+              href="/dashboard"
+            >
               Dashboard
             </Link>
           )}
@@ -40,7 +55,8 @@ export default async function HomePage() {
                 href="/dashboard"
                 className="button button-primary inline-flex justify-center items-center gap-4 min-h-[47px] p-[12px_22px] font-semibold border border-transparent rounded-[4px] leading-[1.4] transition-colors duration-200 whitespace-nowrap bg-accent text-white hover:bg-accent-hover text-sm max-md:min-h-[40px] max-md:gap-2 max-md:p-[10px_12px] max-md:text-[10px]"
               >
-                Dashboard <ArrowRight size={18} className="max-md:hidden shrink-0" />
+                Dashboard{' '}
+                <ArrowRight size={18} className="max-md:hidden shrink-0" />
               </Link>
             </>
           ) : (
@@ -55,7 +71,8 @@ export default async function HomePage() {
                 href="/register"
                 className="button button-primary inline-flex justify-center items-center gap-4 min-h-[47px] p-[12px_22px] font-semibold border border-transparent rounded-[4px] leading-[1.4] transition-colors duration-200 whitespace-nowrap bg-accent text-white hover:bg-accent-hover text-sm max-md:min-h-[40px] max-md:gap-2 max-md:p-[10px_12px] max-md:text-[10px]"
               >
-                Start your squad <ArrowRight size={18} className="max-md:hidden shrink-0" />
+                Start your squad{' '}
+                <ArrowRight size={18} className="max-md:hidden shrink-0" />
               </Link>
             </>
           )}
@@ -78,7 +95,7 @@ export default async function HomePage() {
               <br />
               <span className="whitespace-nowrap">Every bit of impact.</span>
             </h1>
-            <p className="text-[clamp(16px,1.4vw,21px)] leading-[1.65] max-w-[490px] pr-[30px] mt-[25px] text-foreground max-md:text-[15px] max-md:max-w-[42ch] max-md:mt-[22px] max-md:pr-0">
+            <p className="text-[clamp(16px,1.4vw,21px)] leading-[1.65] max-w-122.5 pr-[30px] mt-[25px] text-foreground max-md:text-[15px] max-md:max-w-[42ch] max-md:mt-[22px] max-md:pr-0">
               Build your roster, record the match, and give every performance
               its place on the board.
             </p>

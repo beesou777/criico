@@ -52,7 +52,7 @@ export function AuthShell({
           <ArrowLeft size={16} />
           Back to the ground
         </Link>
-        <div className="auth-panel w-full max-w-[430px] m-[45px_auto] max-md:m-[36px_auto]">
+        <div className="auth-panel w-full max-w-107.5 m-[45px_auto] max-md:m-[36px_auto]">
           <h1 className="text-[32px] font-extrabold leading-[1.25] tracking-[-0.035em] mb-[14px] text-foreground max-md:text-[29px]">
             {title}
           </h1>

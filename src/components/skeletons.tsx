@@ -172,7 +172,7 @@ export function FormSkeleton() {
       <div className="page-heading flex justify-between items-center gap-[25px] mb-8 max-md:flex-col max-md:items-start max-md:gap-5 max-md:mb-[26px]">
         <Skeleton className="w-[230px] max-w-[85%] h-[25px] my-3" />
       </div>
-      <div className="max-w-[900px] py-5">
+      <div className="max-w-225 py-5">
         {Array.from({ length: 2 }, (_, section) => (
           <div
             className="p-[25px] mb-6 border border-border rounded-lg bg-card"

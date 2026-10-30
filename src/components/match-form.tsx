@@ -856,7 +856,7 @@ export function MatchForm({
             <p className="prompt-title text-sm font-bold text-foreground m-0">
               Select both match teams above
             </p>
-            <p className="prompt-desc text-xs max-w-[420px] m-0 leading-[1.5]">
+            <p className="prompt-desc text-xs max-w-105 m-0 leading-[1.5]">
               Choose Team A and Team B in the match details card to view and
               select squad participants.
             </p>
