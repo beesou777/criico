@@ -47,9 +47,6 @@ export default async function DashboardLayout({
         </main>
         <footer className="dashboard-footer flex justify-between gap-4 p-[24px_4%] text-[11px] text-secondary border-t border-border max-md:p-[20px_5%] max-md:text-[9px]">
           Your local game, properly managed.
-          <span className="tracking-[0.12em] text-[9px] max-md:text-[8px]">
-            CRIICO / NEPAL
-          </span>
         </footer>
       </div>
     </div>
