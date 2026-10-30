@@ -39,7 +39,6 @@ async function seed() {
       );
     const passwordHash = await bcrypt.hash(plainPassword, 12);
 
-    // 1. Upsert Showcase User
     const userRes = await client.query(
       `INSERT INTO users (email, "passwordHash", "organizationName")
        VALUES ($1, $2, $3)
@@ -55,8 +54,6 @@ async function seed() {
       `Showcase user ready: ${user.email} (${user.id}) — ${user.organizationName}`,
     );
 
-    // 2. Clean existing demo data
-    // Use a transaction so failed seeding can be rolled back.
     await client.query('BEGIN');
 
     await client.query(
@@ -75,7 +72,6 @@ async function seed() {
 
     console.log('Cleaned previous demo data for user.');
 
-    // 3. Original players
     const originalPlayers = [
       {
         name: 'Dipendra Singh Airee',
@@ -199,9 +195,6 @@ async function seed() {
       },
     ];
 
-    // 4. Additional players from reported 2026 NPL squads.
-    // These are squad additions, not a claim that every player is
-    // confirmed in the final playing XI.
     const additionalPlayers = [
       // Biratnagar Kings
       { name: 'Lokesh Bam', role: 'Wicketkeeper', basePrice: 1500000 },
@@ -362,8 +355,6 @@ async function seed() {
       { name: 'Anil Kharel', role: 'Bowler', basePrice: 1000000 },
     ];
 
-    // 5. Give new players placeholder statistics.
-    // Replace these with verified stats before using real rankings.
     const originalNames = new Set(
       originalPlayers.map((p) => p.name.toLowerCase()),
     );
@@ -387,9 +378,6 @@ async function seed() {
 
     const nplPlayers = [...originalPlayers, ...newPlayers];
 
-    // Keep the showcase roster useful with the new team model. The original
-    // players belong to a national showcase squad; the imported NPL players
-    // are grouped in the same order as their source sections above.
     const teamNames = [
       'Nepal Showcase XI',
       'Biratnagar Kings',
@@ -438,7 +426,6 @@ async function seed() {
       teamMap.set(name, teamRes.rows[0].id);
     }
 
-    // 6. Insert Players
     const playerMap = new Map();
 
     for (const p of nplPlayers) {
@@ -466,8 +453,6 @@ async function seed() {
 
     console.log(`Inserted ${nplPlayers.length} players into squad.`);
 
-    // 7. Insert Matches & Performances
-    // These are the original demo matches, not the 2026 fixture list.
     const matches = [
       {
         teamA: 'Janakpur Bolts',

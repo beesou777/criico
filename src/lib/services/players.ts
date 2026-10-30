@@ -194,16 +194,12 @@ export async function deletePlayer(
     client.release();
   }
 }
-// ----------------- Leaderboard Service -----------------
-
 export async function getLeaderboard(
   ownerId: string,
   options: PlayerListQuery = playerListQuerySchema.parse({}),
 ): Promise<Paginated<RankedPlayerRecord>> {
   const input = playerListQuerySchema.parse(options);
   const filters = playerFilters(ownerId, input);
-  // Calculate and rank the full owner-scoped roster in TypeScript so the
-  // scoring function remains the only source of Impact Score rules.
   const result = await query<Record<string, unknown>>(
     `SELECT ${playerColumns} FROM players WHERE ${filters.where}`,
     filters.params,

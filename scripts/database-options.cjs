@@ -1,4 +1,3 @@
-// Shared by application, migrations, and optional seeding.
 function databaseOptions(connectionString) {
   if (!connectionString) throw new Error('DATABASE_URL is required.');
   let url;

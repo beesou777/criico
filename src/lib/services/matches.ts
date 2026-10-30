@@ -90,7 +90,6 @@ export async function recordMatch(
     .update(canonicalMatch(input))
     .digest('hex');
 
-  // Check idempotency first
   const existingRes = await query(
     `SELECT id, "teamA", "teamB", result, "playedAt", "submissionKey", "payloadHash"
      FROM matches
@@ -130,7 +129,6 @@ export async function recordMatch(
       throw new ServiceError(400, 'Choose two different teams.');
     }
 
-    // Insert match record
     const matchInsert = await client.query(
       `INSERT INTO matches ("ownerId", "teamAId", "teamBId", "teamA", "teamB", result, "playedAt", "submissionKey", "payloadHash")
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -149,7 +147,6 @@ export async function recordMatch(
     );
     const createdMatch = matchInsert.rows[0];
 
-    // Lock players in stable order (ID ASC) to prevent deadlocks
     const playerIds = input.performances.map((p) => p.playerId);
     const playersLockRes = await client.query(
       `SELECT id, "teamId", "matchesPlayed", "totalRuns", "totalWickets"
@@ -169,7 +166,6 @@ export async function recordMatch(
 
     const lockedPlayersMap = new Map(playersLockRes.rows.map((p) => [p.id, p]));
 
-    // Validate every locked player before writing any performance rows.
     const performanceRows: PerformanceInput[] = [];
     for (const perf of input.performances) {
       const p = lockedPlayersMap.get(perf.playerId)!;
@@ -196,7 +192,6 @@ export async function recordMatch(
       performanceRows.push(perf);
     }
 
-    // Keep the transaction to a constant number of round trips as roster size grows.
     await client.query(
       `INSERT INTO performances ("matchId", "playerId", "teamSide", runs, wickets)
        SELECT $1, rows."playerId", rows."teamSide", rows.runs, rows.wickets
@@ -232,7 +227,6 @@ export async function recordMatch(
   } catch (err: unknown) {
     await client.query('ROLLBACK');
     if (isUniqueViolation(err)) {
-      // Unique violation on (ownerId, submissionKey) under race conditions
       const raceRes = await client.query(
         `SELECT id, "teamA", "teamB", result, "playedAt", "submissionKey", "payloadHash"
          FROM matches

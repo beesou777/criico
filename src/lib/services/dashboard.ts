@@ -24,7 +24,6 @@ export interface DashboardOverview extends DashboardSummary {
   recentMatches: MatchRecord[];
 }
 
-/** Load the dashboard in one database round trip instead of three lists plus a summary. */
 export async function getDashboardOverview(
   ownerId: string,
 ): Promise<DashboardOverview> {

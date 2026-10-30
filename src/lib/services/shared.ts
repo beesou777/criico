@@ -135,8 +135,6 @@ export function playerOrder(input: PlayerListQuery, leaderboard = false) {
   return `${column} ${direction}, lower(name) COLLATE "C" ASC, id ASC`;
 }
 
-// Count, normalized page, and rows use one PostgreSQL statement/snapshot.
-// SQL fragments are constants authored here; all external values are parameters.
 export async function paginatedRows(
   filteredSQL: string,
   orderSQL: string,

@@ -6,12 +6,10 @@ export async function middleware(request: NextRequest) {
   const session = await verifySession(token);
   const { pathname } = request.nextUrl;
 
-  // If already logged in, redirect away from login/register to dashboard
   if (session && (pathname === '/login' || pathname === '/register')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // If not logged in and accessing dashboard, redirect to login
   if (!session && pathname.startsWith('/dashboard')) {
     return NextResponse.redirect(new URL('/login', request.url));
   }

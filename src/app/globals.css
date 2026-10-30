@@ -186,7 +186,6 @@
   }
 }
 
-/* Skeleton animation & list transition states */
 @keyframes skeleton-pulse {
   0%,
   100% {
@@ -273,7 +272,6 @@
   }
 }
 
-/* Styles for the enhanced leaderboard and match recording controls. */
 @layer components {
   .rank {
     font-variant-numeric: tabular-nums;

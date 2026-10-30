@@ -124,7 +124,6 @@ export function MatchForm({
 }) {
   const router = useRouter();
 
-  // Pick initial default teams if available
   const defaultTeamA = teams[0]?.name ?? '';
   const defaultTeamB =
     teams.find((t) => t.name !== defaultTeamA)?.name ?? teams[1]?.name ?? '';
@@ -142,13 +141,10 @@ export function MatchForm({
 
   const [playedAt, setPlayedAt] = useState(today);
 
-  // Selected player IDs
   const [selected, setSelected] = useState<string[]>([]);
 
-  // Per-player performance figures: { runs: number, wickets: number }
   const [stats, setStats] = useState<Record<string, PlayerStat>>({});
 
-  // Search queries for each team's squad selector
   const [searchA, setSearchA] = useState('');
   const [searchB, setSearchB] = useState('');
   const [pickerOpenA, setPickerOpenA] = useState(false);
@@ -158,7 +154,6 @@ export function MatchForm({
   const [, setError] = useState<string | null>(null);
   const [submissionKey, setSubmissionKey] = useState<string | null>(null);
 
-  // Available teams for Team A (excluding Team B) and Team B (excluding Team A)
   const availableTeamsForA = useMemo(
     () => teams.filter((t) => t.name !== teamB),
     [teams, teamB],
@@ -168,7 +163,6 @@ export function MatchForm({
     [teams, teamA],
   );
 
-  // Players registered in database for Team A and Team B
   const teamAPlayers = useMemo(
     () => (teamA ? players.filter((p) => p.teamName === teamA) : []),
     [players, teamA],
@@ -179,7 +173,6 @@ export function MatchForm({
     [players, teamB],
   );
 
-  // Selected participants for Team A and Team B
   const selectedA = useMemo(
     () => teamAPlayers.filter((p) => selected.includes(p.id)),
     [teamAPlayers, selected],
@@ -190,7 +183,6 @@ export function MatchForm({
     [teamBPlayers, selected],
   );
 
-  // Search results stay small so the picker remains quick for larger squads.
   const matchingA = useMemo(() => {
     if (!searchA.trim()) return [];
     const q = searchA.toLowerCase().trim();
@@ -213,10 +205,8 @@ export function MatchForm({
       .slice(0, INITIAL_PLAYER_RESULTS);
   }, [teamBPlayers, searchB]);
 
-  // Handle Team A change with graceful revalidation
   const handleTeamAChange = (newTeamA: string) => {
     setTeamA(newTeamA);
-    // If any selected player belonged to the previous Team A and is not on Team B, remove them
     const invalidated = selected.filter((id) => {
       const p = players.find((item) => item.id === id);
       return p && p.teamName !== newTeamA && p.teamName !== teamB;
@@ -232,10 +222,8 @@ export function MatchForm({
     if (!pending) setSubmissionKey(null);
   };
 
-  // Handle Team B change with graceful revalidation
   const handleTeamBChange = (newTeamB: string) => {
     setTeamB(newTeamB);
-    // If any selected player belonged to the previous Team B and is not on Team A, remove them
     const invalidated = selected.filter((id) => {
       const p = players.find((item) => item.id === id);
       return p && p.teamName !== teamA && p.teamName !== newTeamB;
@@ -251,7 +239,6 @@ export function MatchForm({
     if (!pending) setSubmissionKey(null);
   };
 
-  // Add participant to match
   const addParticipant = useCallback(
     (id: string) => {
       const player = players.find((item) => item.id === id);
@@ -282,7 +269,6 @@ export function MatchForm({
     [pending, players, selected],
   );
 
-  // Remove participant from match
   const removeParticipant = useCallback(
     (id: string) => {
       setSelected((prev) => prev.filter((item) => item !== id));
@@ -292,7 +278,6 @@ export function MatchForm({
     [pending],
   );
 
-  // Update stat values
   const updateStat = useCallback(
     (id: string, field: 'runs' | 'wickets', value: string) => {
       const parsed = value === '' ? '' : Number(value);
@@ -309,7 +294,6 @@ export function MatchForm({
     [pending],
   );
 
-  // Submission handler with comprehensive validation
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -355,7 +339,6 @@ export function MatchForm({
       };
     });
 
-    // Explicit check for negative runs -> toast notification
     const negativeRun = performances.find((p) => p.runs < 0);
     if (negativeRun) {
       const msg = 'Total runs must be zero or greater.';
@@ -364,7 +347,6 @@ export function MatchForm({
       return;
     }
 
-    // Explicit check for negative wickets -> toast notification
     const negativeWicket = performances.find((p) => p.wickets < 0);
     if (negativeWicket) {
       const msg = 'Total wickets must be zero or greater.';
@@ -397,7 +379,6 @@ export function MatchForm({
       return;
     }
 
-    // Whole number and upper bounds verification
     const invalid = performances.find(
       (p) =>
         !Number.isInteger(p.runs) ||
@@ -659,7 +640,6 @@ export function MatchForm({
   );
   return (
     <form autoComplete="off" className="match-editor-form" onSubmit={submit}>
-      {/* SECTION 1: Match Details & Fixture Setup */}
       <fieldset
         className="bg-card border border-border rounded-lg p-6 shadow-xs"
         disabled={pending}
@@ -669,7 +649,6 @@ export function MatchForm({
         </legend>
 
         <div className="matchup-grid grid grid-cols-[1fr_auto_1fr] items-end gap-5 mb-5 max-sm:grid-cols-1 max-sm:gap-3">
-          {/* Team A Selection */}
           <div className="flex flex-col gap-2">
             <label
               htmlFor="match-team-a"
@@ -698,7 +677,6 @@ export function MatchForm({
             </select>
           </div>
 
-          {/* VS Divider Indicator */}
           <div
             className="flex flex-col items-center justify-center pb-1"
             aria-hidden="true"
@@ -708,7 +686,6 @@ export function MatchForm({
             </span>
           </div>
 
-          {/* Team B Selection */}
           <div className="flex flex-col gap-2">
             <label
               htmlFor="match-team-b"
@@ -738,7 +715,6 @@ export function MatchForm({
           </div>
         </div>
 
-        {/* Fixture Matchup Banner (Displayed when both teams chosen) */}
         {teamA && teamB && (
           <div
             className="fixture-banner flex flex-wrap items-center justify-between gap-3 p-[12px_18px] mb-5 bg-background border border-border rounded-[6px]"
@@ -768,7 +744,6 @@ export function MatchForm({
           </div>
         )}
 
-        {/* Date and Result Settings */}
         <div className="match-meta-grid grid grid-cols-2 gap-5 max-sm:grid-cols-1">
           <div className="flex flex-col gap-1.5">
             <label
@@ -826,7 +801,6 @@ export function MatchForm({
         </div>
       </fieldset>
 
-      {/* SECTION 2: Participant selection */}
       <fieldset className="match-participants-fieldset" disabled={pending}>
         <legend className="fieldset-legend">Choose participants</legend>
         <p className="performances-instructions">
@@ -854,7 +828,6 @@ export function MatchForm({
         )}
       </fieldset>
 
-      {/* SECTION 3: Compact performance entry */}
       <fieldset className="match-performances-fieldset" disabled={pending}>
         <legend className="fieldset-legend">Record player performances</legend>
         {teamA && teamB ? (
@@ -884,7 +857,6 @@ export function MatchForm({
         )}
       </fieldset>
 
-      {/* SECTION 4: Summary & Primary Action Submission Bar */}
       <div className="match-submission-bar">
         <div className="submission-summary" role="status" aria-live="polite">
           <span className="summary-headline">
