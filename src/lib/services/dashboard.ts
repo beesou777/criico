@@ -6,7 +6,9 @@ import {
   ServiceError,
   type MatchRecord,
   type PlayerRecord,
+  type RankedPlayerRecord,
 } from './shared';
+import { calculateImpactScore, getExperienceStatus } from '../score';
 
 export interface DashboardSummary {
   totalPlayers: number;
@@ -18,6 +20,7 @@ export interface DashboardSummary {
 export interface DashboardOverview extends DashboardSummary {
   topRunScorers: PlayerRecord[];
   topWicketTakers: PlayerRecord[];
+  topImpactPlayers: RankedPlayerRecord[];
   recentMatches: MatchRecord[];
 }
 
@@ -32,6 +35,7 @@ export async function getDashboardOverview(
     totalRuns: string;
     topRunScorers: Record<string, unknown>[];
     topWicketTakers: Record<string, unknown>[];
+    allPlayers: Record<string, unknown>[];
     recentMatches: Record<string, unknown>[];
   }>(
     `SELECT
@@ -52,6 +56,10 @@ export async function getDashboardOverview(
          LIMIT 4
        ) item) AS "topWicketTakers",
        (SELECT COALESCE(json_agg(item), '[]'::json) FROM (
+         SELECT ${playerColumns} FROM players
+         WHERE "ownerId" = $1
+       ) item) AS "allPlayers",
+       (SELECT COALESCE(json_agg(item), '[]'::json) FROM (
          SELECT matches.id, matches."teamA", matches."teamB", matches.result,
                 matches."playedAt"::text AS "playedAt"
          FROM matches WHERE matches."ownerId" = $1
@@ -62,6 +70,24 @@ export async function getDashboardOverview(
   );
   const row = result.rows[0];
   if (!row) throw new ServiceError(500, 'Could not load dashboard.');
+  const topImpactPlayers = row.allPlayers
+    .map((item) => {
+      const player = formatPlayerRow(item);
+      return {
+        ...player,
+        score: calculateImpactScore(player),
+        experienceStatus: getExperienceStatus(player.matchesPlayed),
+      };
+    })
+    .sort((a, b) => {
+      const scoreDifference = b.score.total - a.score.total;
+      return (
+        scoreDifference ||
+        a.name.localeCompare(b.name) ||
+        a.id.localeCompare(b.id)
+      );
+    })
+    .slice(0, 4);
   return {
     totalPlayers: Number(row.totalPlayers),
     totalTeams: Number(row.totalTeams),
@@ -69,6 +95,7 @@ export async function getDashboardOverview(
     totalRuns: Number(row.totalRuns),
     topRunScorers: row.topRunScorers.map(formatPlayerRow),
     topWicketTakers: row.topWicketTakers.map(formatPlayerRow),
+    topImpactPlayers,
     recentMatches: row.recentMatches.map(formatMatchRow),
   };
 }

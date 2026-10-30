@@ -12,6 +12,7 @@ export default async function DashboardPage() {
   const {
     topRunScorers: batters,
     topWicketTakers: bowlers,
+    topImpactPlayers: impactPlayers,
     recentMatches: matches,
   } = dashboard;
 
@@ -110,7 +111,11 @@ export default async function DashboardPage() {
               Full leaderboard <ArrowUpRight size={16} />
             </Link>
           </div>
-          <TopPerformersTables batters={batters} bowlers={bowlers} />
+          <TopPerformersTables
+            batters={batters}
+            bowlers={bowlers}
+            impactPlayers={impactPlayers}
+          />
         </section>
         <section className="section-panel bg-card border border-border rounded-lg overflow-hidden">
           <div className="section-heading flex items-center justify-between gap-[15px] p-[20px_23px] border-b border-border max-md:p-[18px]">

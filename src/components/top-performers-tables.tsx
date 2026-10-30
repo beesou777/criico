@@ -2,22 +2,24 @@
 
 import { useState } from 'react';
 import clsx from 'clsx';
-import type { Player } from '@/lib/contracts';
+import type { Player, RankedPlayer } from '@/lib/contracts';
 import { numberFormat } from '@/lib/contracts';
 import { EmptyState } from '@/components/empty-state';
 
 export function TopPerformersTables({
   batters,
   bowlers,
+  impactPlayers = [],
 }: {
   batters: Player[];
   bowlers: Player[];
+  impactPlayers?: RankedPlayer[];
 }) {
-  const [activeTab, setActiveTab] = useState<'both' | 'batting' | 'bowling'>(
-    'both',
-  );
+  const [activeTab, setActiveTab] = useState<
+    'both' | 'batting' | 'bowling' | 'impact'
+  >('both');
 
-  if (!batters.length && !bowlers.length) {
+  if (!batters.length && !bowlers.length && !impactPlayers.length) {
     return (
       <EmptyState
         title="Your first player starts the story."
@@ -30,6 +32,7 @@ export function TopPerformersTables({
 
   const showBatting = activeTab === 'both' || activeTab === 'batting';
   const showBowling = activeTab === 'both' || activeTab === 'bowling';
+  const showImpact = activeTab === 'impact';
   const batLimit = activeTab === 'both' ? 3 : 4;
   const bowlLimit = activeTab === 'both' ? 3 : 4;
 
@@ -57,6 +60,20 @@ export function TopPerformersTables({
             onClick={() => setActiveTab('both')}
           >
             Both
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'impact'}
+            className={clsx(
+              'border text-xs font-semibold px-3 py-1 rounded cursor-pointer transition-colors duration-150',
+              activeTab === 'impact'
+                ? 'bg-card text-foreground border-border [box-shadow:0_1px_2px_rgba(0,0,0,0.04)]'
+                : 'bg-transparent border-transparent text-secondary hover:text-foreground hover:bg-background',
+            )}
+            onClick={() => setActiveTab('impact')}
+          >
+            Impact
           </button>
           <button
             type="button"
@@ -268,6 +285,92 @@ export function TopPerformersTables({
                       <strong className="text-[#4a1f73] font-extrabold text-[13px] tabular-nums">
                         {player.totalWickets}
                       </strong>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {showImpact && impactPlayers.length > 0 && (
+        <div className="border-b border-border last:border-b-0">
+          <div className="flex items-center gap-2 pt-3 px-4.5 pb-2 bg-background">
+            <span className="text-[9px] font-bold tracking-[0.05em] uppercase px-1.5 py-0.5 rounded bg-[#f9e8ed] text-[#9b1836] border border-[#eac8d2]">
+              Impact
+            </span>
+            <h3 className="text-xs font-bold tracking-tight text-foreground m-0">
+              Impact leaders
+            </h3>
+          </div>
+          <div className="relative overflow-x-auto max-md:w-full">
+            <table className="w-full border-collapse">
+              <caption className="sr-only">Top players by Impact Score</caption>
+              <thead>
+                <tr>
+                  <th
+                    className="px-4 py-3 text-[9px] font-bold tracking-[0.06em] uppercase text-secondary bg-[#f4f6ee] border-b border-border"
+                    scope="col"
+                    style={{ width: '48px' }}
+                  >
+                    Rank
+                  </th>
+                  <th
+                    className="px-4 py-3 text-[9px] font-bold tracking-[0.06em] uppercase text-secondary bg-[#f4f6ee] border-b border-border"
+                    scope="col"
+                  >
+                    Player
+                  </th>
+                  <th
+                    className="text-right tabular-nums px-4 py-3 text-[9px] font-bold tracking-[0.06em] uppercase text-secondary bg-[#f4f6ee] border-b border-border"
+                    scope="col"
+                    style={{ width: '70px' }}
+                  >
+                    Matches
+                  </th>
+                  <th
+                    className="text-right tabular-nums px-4 py-3 text-[9px] font-bold tracking-[0.06em] uppercase text-secondary bg-[#f4f6ee] border-b border-border"
+                    scope="col"
+                    style={{ width: '100px' }}
+                  >
+                    Impact Score
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {impactPlayers.map((player, idx) => (
+                  <tr
+                    className="hover:bg-[#faf7f2] transition-colors"
+                    key={player.id}
+                  >
+                    <td className="px-4 py-3 border-t border-border align-middle">
+                      <span className="tabular-nums text-sm font-semibold text-secondary">
+                        {String(idx + 1).padStart(2, '0')}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 border-t border-border align-middle">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[13px] font-bold text-foreground leading-tight">
+                          {player.name}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-[10px] text-secondary">
+                          <span className="inline-block bg-[#f9e8ed] text-[#9b1836] rounded-[2px] text-[9px] font-semibold px-1 py-0.25 leading-snug">
+                            {player.role}
+                          </span>
+                          {player.teamName ? (
+                            <span className="text-secondary text-[10px] whitespace-nowrap overflow-hidden text-ellipsis max-w-30">
+                              {player.teamName}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="text-right tabular-nums px-4 py-3 border-t border-border align-middle text-xs text-foreground">
+                      {player.matchesPlayed}
+                    </td>
+                    <td className="text-right tabular-nums px-4 py-3 border-t border-border align-middle text-xs text-foreground">
+                      {numberFormat.format(player.score.total)}
                     </td>
                   </tr>
                 ))}

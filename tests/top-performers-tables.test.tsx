@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { TopPerformersTables } from '../src/components/top-performers-tables';
-import type { Player } from '../src/lib/contracts';
+import type { Player, RankedPlayer } from '../src/lib/contracts';
 
 const mockBatters: Player[] = [
   {
@@ -57,6 +57,21 @@ const mockBowlers: Player[] = [
   },
 ];
 
+const mockImpactPlayers: RankedPlayer[] = [
+  {
+    ...mockBatters[0]!,
+    score: {
+      total: 2636,
+      runs: 1776,
+      wickets: 760,
+      roleBonus: 0,
+      experience: 100,
+      keeper: 0,
+    },
+    experienceStatus: 'Veteran',
+  },
+];
+
 describe('TopPerformersTables', () => {
   it('renders separate tables for batting and bowling leaders by default', () => {
     render(<TopPerformersTables batters={mockBatters} bowlers={mockBowlers} />);
@@ -101,5 +116,21 @@ describe('TopPerformersTables', () => {
     expect(
       screen.getByText('Your first player starts the story.'),
     ).toBeInTheDocument();
+  });
+
+  it('shows Impact Score leaders in the impact tab', () => {
+    render(
+      <TopPerformersTables
+        batters={mockBatters}
+        bowlers={mockBowlers}
+        impactPlayers={mockImpactPlayers}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Impact' }));
+    expect(
+      screen.getByRole('heading', { name: 'Impact leaders' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('2,636')).toBeInTheDocument();
   });
 });
