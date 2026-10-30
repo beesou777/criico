@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { TeamRecord } from '@/lib/services/shared';
 import { TeamActions } from './team-actions';
@@ -26,14 +27,15 @@ export function TeamTable({ teams }: { teams: TeamRecord[] }) {
 
   return (
     <>
-      <div className="mt-5 flex flex-wrap items-center gap-3 border-b border-border pb-4">
-        <label className="flex min-w-[220px] flex-1 items-center rounded-md border border-[#b9c4b2] bg-white px-3">
+      <div className="table-toolbar mt-5 flex flex-wrap items-center gap-[14px] border-b border-border pb-[18px] max-md:gap-[10px]">
+        <label className="flex min-h-[42px] min-w-[220px] max-w-[330px] flex-1 items-center gap-2 rounded-[4px] border border-[#b9c4b2] bg-white pl-3 max-md:max-w-none">
+          <Search size={18} className="shrink-0 text-secondary" />
           <span className="sr-only">Search teams</span>
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search teams..."
-            className="min-h-10 w-full bg-transparent text-xs text-ink outline-none"
+            placeholder="Find a team..."
+            className="min-h-[40px] w-full border-0 bg-transparent pl-0 text-xs text-ink outline-none"
           />
         </label>
         <label>
@@ -41,13 +43,19 @@ export function TeamTable({ teams }: { teams: TeamRecord[] }) {
           <select
             value={status}
             onChange={(event) => setStatus(event.target.value as typeof status)}
-            className="min-h-10 rounded-md border border-[#b9c4b2] bg-white px-3 text-xs text-ink"
+            className="min-h-[42px] min-w-[150px] rounded-[4px] border border-[#b9c4b2] bg-white p-[8px_30px_8px_12px] text-xs text-ink"
           >
             <option value="active">Active teams</option>
             <option value="disbanded">Disbanded teams</option>
             <option value="all">All teams</option>
           </select>
         </label>
+        <span
+          className="result-count ml-auto whitespace-nowrap text-[10px] text-secondary max-md:ml-0"
+          aria-live="polite"
+        >
+          {filteredTeams.length} {filteredTeams.length === 1 ? 'team' : 'teams'}
+        </span>
       </div>
       {filteredTeams.length ? (
         <div className="mt-4 overflow-x-auto rounded-lg border border-border">
