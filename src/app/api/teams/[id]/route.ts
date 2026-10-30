@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getAuthUser } from '@/lib/session';
 import { apiError, requireSameOrigin } from '@/lib/http';
-import { setTeamDisbanded } from '@/lib/services/teams';
+import { deleteTeam, setTeamDisbanded } from '@/lib/services/teams';
 
 export async function DELETE(
   request: NextRequest,
@@ -15,7 +15,7 @@ export async function DELETE(
         { error: { message: 'Sign in to continue.' } },
         { status: 401 },
       );
-    await setTeamDisbanded(user.id, (await params).id, true);
+    await deleteTeam(user.id, (await params).id);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return apiError(error);

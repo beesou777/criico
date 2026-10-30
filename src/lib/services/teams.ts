@@ -89,3 +89,35 @@ export async function setTeamDisbanded(
     );
   }
 }
+
+export async function deleteTeam(
+  ownerId: string,
+  teamId: string,
+): Promise<void> {
+  const team = await query<{ playerCount: string; matchCount: string }>(
+    `SELECT
+       (SELECT count(*) FROM players WHERE players."teamId" = teams.id)::text AS "playerCount",
+       (SELECT count(*) FROM matches WHERE matches."teamAId" = teams.id OR matches."teamBId" = teams.id)::text AS "matchCount"
+     FROM teams
+     WHERE teams.id = $1 AND teams."ownerId" = $2 AND teams."disbandedAt" IS NULL`,
+    [teamId, ownerId],
+  );
+  const current = team.rows[0];
+  if (!current) throw new ServiceError(404, 'Active team not found.');
+  if (Number(current.playerCount) > 0) {
+    throw new ServiceError(
+      409,
+      'This team has players. Disband it to preserve the roster.',
+    );
+  }
+  if (Number(current.matchCount) > 0) {
+    throw new ServiceError(
+      409,
+      'This team has match history. Disband it to preserve the records.',
+    );
+  }
+  await query('DELETE FROM teams WHERE id = $1 AND "ownerId" = $2', [
+    teamId,
+    ownerId,
+  ]);
+}
