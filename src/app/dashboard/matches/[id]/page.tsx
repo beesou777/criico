@@ -109,7 +109,10 @@ export default async function MatchDetailsPage({
       >
         <div className="match-detail-section-heading flex items-end justify-between gap-[18px] mb-[14px] max-md:items-start max-md:flex-col max-md:gap-1">
           <div>
-            <h2 className="text-[19px] font-bold tracking-[-0.025em] text-foreground" id="performances-heading">
+            <h2
+              className="text-[19px] font-bold tracking-[-0.025em] text-foreground"
+              id="performances-heading"
+            >
               Player performances
             </h2>
             <p className="text-secondary text-[11px] mt-1">

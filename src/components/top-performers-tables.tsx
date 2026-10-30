@@ -101,9 +101,7 @@ export function TopPerformersTables({
           </div>
           <div className="relative overflow-x-auto max-md:w-full">
             <table className="w-full border-collapse">
-              <caption className="sr-only">
-                Top players by career runs
-              </caption>
+              <caption className="sr-only">Top players by career runs</caption>
               <thead>
                 <tr>
                   <th
@@ -137,7 +135,10 @@ export function TopPerformersTables({
               </thead>
               <tbody>
                 {displayedBatters.map((player, idx) => (
-                  <tr className="hover:bg-[#faf7f2] transition-colors" key={player.id}>
+                  <tr
+                    className="hover:bg-[#faf7f2] transition-colors"
+                    key={player.id}
+                  >
                     <td className="px-4 py-3 border-t border-border align-middle">
                       <span
                         className={clsx(
@@ -229,7 +230,10 @@ export function TopPerformersTables({
               </thead>
               <tbody>
                 {displayedBowlers.map((player, idx) => (
-                  <tr className="hover:bg-[#faf7f2] transition-colors" key={player.id}>
+                  <tr
+                    className="hover:bg-[#faf7f2] transition-colors"
+                    key={player.id}
+                  >
                     <td className="px-4 py-3 border-t border-border align-middle">
                       <span
                         className={clsx(

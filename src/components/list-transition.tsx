@@ -20,11 +20,12 @@ export function ListTransition({ children }: { children: ReactNode }) {
 
   return (
     <ListNavigationContext.Provider value={{ pending, navigate }}>
-      <div className="list-transition" data-pending={pending} aria-busy={pending}>
-        <span
-          className="sr-only"
-          role="status"
-        >
+      <div
+        className="list-transition"
+        data-pending={pending}
+        aria-busy={pending}
+      >
+        <span className="sr-only" role="status">
           {pending ? 'Updating results…' : ''}
         </span>
         {children}

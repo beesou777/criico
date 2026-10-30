@@ -39,10 +39,7 @@ export function PlayersTable({ players }: { players: Player[] }) {
         </thead>
         <tbody>
           {players.map((p) => (
-            <tr
-              key={p.id}
-              className="hover:bg-[#f9faf4] transition-colors"
-            >
+            <tr key={p.id} className="hover:bg-[#f9faf4] transition-colors">
               <td className="p-[18px] border-t border-[#e6e9df] align-top font-bold whitespace-nowrap">
                 <span className="avatar inline-flex items-center justify-center bg-[#e2e8dc] text-[#1a4f32] font-extrabold w-7 h-7 rounded-full mr-3 text-[11px]">
                   {p.name.slice(0, 1).toUpperCase()}

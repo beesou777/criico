@@ -16,7 +16,6 @@ export const paginationQuerySchema = z.object({
   limit: positiveInteger(20, 100),
 });
 
-
 export const playerListQuerySchema = paginationQuerySchema
   .extend({
     search: z.string().trim().max(80).default(''),

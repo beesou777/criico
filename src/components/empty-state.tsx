@@ -18,9 +18,7 @@ export function EmptyState({
       <h2 className="text-[20px] font-bold tracking-[-0.03em] mt-[18px] text-primary">
         {title}
       </h2>
-      <p className="text-xs text-secondary max-w-[42ch] mt-3">
-        {description}
-      </p>
+      <p className="text-xs text-secondary max-w-[42ch] mt-3">{description}</p>
       {href && (
         <Link
           href={href}

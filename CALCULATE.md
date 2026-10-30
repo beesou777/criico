@@ -24,20 +24,20 @@ Impact Score =
 
 ### Role calculations
 
-| Role | Calculation |
-| --- | --- |
-| Batsman | Adds `Total Runs × 0.36` as a role bonus. A run is therefore worth `1.2 + 0.36 = 1.56` points. |
-| Bowler | Adds `Total Wickets × 10` as a role bonus. A wicket is therefore worth `20 + 10 = 30` points. |
-| All-rounder | No additional role bonus. |
-| Wicketkeeper | Adds a flat `+30` points. A wicketkeeper does not receive the Bowler bonus. |
+| Role         | Calculation                                                                                    |
+| ------------ | ---------------------------------------------------------------------------------------------- |
+| Batsman      | Adds `Total Runs × 0.36` as a role bonus. A run is therefore worth `1.2 + 0.36 = 1.56` points. |
+| Bowler       | Adds `Total Wickets × 10` as a role bonus. A wicket is therefore worth `20 + 10 = 30` points.  |
+| All-rounder  | No additional role bonus.                                                                      |
+| Wicketkeeper | Adds a flat `+30` points. A wicketkeeper does not receive the Bowler bonus.                    |
 
 ### Experience calculations
 
-| Matches played | Status | Adjustment |
-| --- | --- | ---: |
-| `0–4` | Rookie | `-50` |
-| `5–20` | Regular | `0` |
-| `21+` | Veteran | `+100` |
+| Matches played | Status  | Adjustment |
+| -------------- | ------- | ---------: |
+| `0–4`          | Rookie  |      `-50` |
+| `5–20`         | Regular |        `0` |
+| `21+`          | Veteran |     `+100` |
 
 The boundaries are strict: exactly 5 matches is Regular, and exactly 20 matches is also Regular.
 
