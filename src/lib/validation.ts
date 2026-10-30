@@ -68,7 +68,10 @@ export const performanceSchema = z
     playerId: z.string().uuid('Invalid player ID.'),
     teamSide: z.enum(['A', 'B']),
     runs: count,
-    wickets: count,
+    wickets: count.max(
+      10,
+      'A player cannot take more than 10 wickets in one match.',
+    ),
   })
   .strict();
 
@@ -108,6 +111,28 @@ export const matchSchema = z
         path: ['performances'],
         message: 'A player can appear only once in a match.',
       });
+    }
+    for (const teamSide of ['A', 'B'] as const) {
+      const teamPlayers = value.performances.filter(
+        (performance) => performance.teamSide === teamSide,
+      );
+      if (teamPlayers.length > 11) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['performances'],
+          message: `Team ${teamSide} cannot have more than 11 players in a match.`,
+        });
+      }
+      const wickets = value.performances
+        .filter((performance) => performance.teamSide === teamSide)
+        .reduce((total, performance) => total + performance.wickets, 0);
+      if (wickets > 10) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['performances'],
+          message: `${teamSide === 'A' ? value.teamA : value.teamB} cannot record more than 10 wickets in this innings.`,
+        });
+      }
     }
     if (value.playedAt > cricketToday()) {
       ctx.addIssue({

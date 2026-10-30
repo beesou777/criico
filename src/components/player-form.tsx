@@ -158,6 +158,10 @@ export function PlayerForm({
               max={1000000000}
               required
               defaultValue={player?.basePrice ?? 0}
+              onFocus={(event) => {
+                if (event.currentTarget.value === '0')
+                  event.currentTarget.select();
+              }}
               className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
             />
           </label>
@@ -184,6 +188,10 @@ export function PlayerForm({
               step="1"
               required
               defaultValue={player?.matchesPlayed ?? 0}
+              onFocus={(event) => {
+                if (event.currentTarget.value === '0')
+                  event.currentTarget.select();
+              }}
               className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
             />
           </label>
@@ -195,6 +203,10 @@ export function PlayerForm({
               step="1"
               required
               defaultValue={player?.totalRuns ?? 0}
+              onFocus={(event) => {
+                if (event.currentTarget.value === '0')
+                  event.currentTarget.select();
+              }}
               className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
             />
           </label>
@@ -206,6 +218,10 @@ export function PlayerForm({
               step="1"
               required
               defaultValue={player?.totalWickets ?? 0}
+              onFocus={(event) => {
+                if (event.currentTarget.value === '0')
+                  event.currentTarget.select();
+              }}
               className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
             />
           </label>

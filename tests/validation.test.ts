@@ -56,6 +56,41 @@ describe('Validation Boundaries', () => {
     }
   });
 
+  it('enforces cricket wicket limits for players and innings', () => {
+    expect(
+      matchSchema.safeParse({
+        ...validMatch,
+        performances: [{ ...validMatch.performances[0], wickets: 11 }],
+      }).success,
+    ).toBe(false);
+    expect(
+      matchSchema.safeParse({
+        ...validMatch,
+        performances: [
+          { ...validMatch.performances[0], wickets: 6 },
+          {
+            playerId: 'ff019dca-cc4e-49fc-ad18-7c3d111dd9b8',
+            teamSide: 'A' as const,
+            runs: 0,
+            wickets: 5,
+          },
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
+  it('limits each match team to a playing XI of 11 players', () => {
+    const performances = Array.from({ length: 12 }, (_, index) => ({
+      playerId: `405be0dc-9ae6-43d9-b612-d52f1b5387${String(index).padStart(2, '0')}`,
+      teamSide: 'A' as const,
+      runs: 0,
+      wickets: 0,
+    }));
+    expect(matchSchema.safeParse({ ...validMatch, performances }).success).toBe(
+      false,
+    );
+  });
+
   it('rejects mass-assignment of ownerId and invalid price decimal precision', () => {
     const player = {
       name: 'Paras Khadka',

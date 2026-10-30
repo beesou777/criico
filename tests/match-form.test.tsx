@@ -185,6 +185,26 @@ describe('MatchForm UI & Validation Tests', () => {
     expect(mocks.submitJSON).not.toHaveBeenCalled();
   });
 
+  it('rejects more than 10 wickets for one player in a match', () => {
+    render(<MatchForm teams={mockTeams} players={mockPlayers} />);
+
+    addPlayer('Lalit Rajbanshi', 'Janakpur Bolts');
+    fireEvent.change(
+      screen.getByLabelText('Wickets taken by Lalit Rajbanshi'),
+      {
+        target: { value: '11' },
+      },
+    );
+    fireEvent.submit(
+      screen.getByRole('button', { name: /record match/i }).closest('form')!,
+    );
+
+    expect(mocks.toastError).toHaveBeenCalledWith(
+      'A player cannot take more than 10 wickets in one match.',
+    );
+    expect(mocks.submitJSON).not.toHaveBeenCalled();
+  });
+
   it('triggers UI toast notification when no players are selected', async () => {
     render(<MatchForm teams={mockTeams} players={mockPlayers} />);
 

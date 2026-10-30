@@ -23,6 +23,9 @@ import { submitJSON } from '@/lib/client-api';
 
 type PlayerStat = { runs: number | string; wickets: number | string };
 
+const INITIAL_PLAYER_RESULTS = 20;
+const MAX_PLAYERS_PER_TEAM = 11;
+
 const PerformanceRow = memo(function PerformanceRow({
   player,
   side,
@@ -39,6 +42,8 @@ const PerformanceRow = memo(function PerformanceRow({
   const hasNegativeRuns = typeof stat.runs === 'number' && stat.runs < 0;
   const hasNegativeWickets =
     typeof stat.wickets === 'number' && stat.wickets < 0;
+  const hasTooManyWickets =
+    typeof stat.wickets === 'number' && stat.wickets > 10;
 
   return (
     <tr
@@ -61,6 +66,9 @@ const PerformanceRow = memo(function PerformanceRow({
           step="1"
           required
           value={stat.runs}
+          onFocus={(event) => {
+            if (String(stat.runs) === '0') event.currentTarget.select();
+          }}
           onChange={(event) => onUpdate(player.id, 'runs', event.target.value)}
           className={`stat-input ${hasNegativeRuns ? 'input-error' : ''}`}
           aria-label={`Runs scored by ${player.name}`}
@@ -81,19 +89,28 @@ const PerformanceRow = memo(function PerformanceRow({
           type="number"
           name={`wickets-${player.id}`}
           min="0"
+          max="10"
           step="1"
           required
           value={stat.wickets}
+          onFocus={(event) => {
+            if (String(stat.wickets) === '0') event.currentTarget.select();
+          }}
           onChange={(event) =>
             onUpdate(player.id, 'wickets', event.target.value)
           }
-          className={`stat-input ${hasNegativeWickets ? 'input-error' : ''}`}
+          className={`stat-input ${hasNegativeWickets || hasTooManyWickets ? 'input-error' : ''}`}
           aria-label={`Wickets taken by ${player.name}`}
           aria-invalid={hasNegativeWickets}
         />
         {hasNegativeWickets && (
           <span className="inline-stat-error" role="alert">
             Must be ≥ 0
+          </span>
+        )}
+        {hasTooManyWickets && (
+          <span className="inline-stat-error" role="alert">
+            Maximum 10 per match
           </span>
         )}
       </td>
@@ -153,7 +170,7 @@ export function MatchForm({
   const [pickerOpenB, setPickerOpenB] = useState(false);
 
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [submissionKey, setSubmissionKey] = useState<string | null>(null);
 
   // Available teams for Team A (excluding Team B) and Team B (excluding Team A)
@@ -188,7 +205,7 @@ export function MatchForm({
     [teamBPlayers, selected],
   );
 
-  // Search results are only shown while a picker is open and a query exists.
+  // Search results stay small so the picker remains quick for larger squads.
   const matchingA = useMemo(() => {
     if (!searchA.trim()) return [];
     const q = searchA.toLowerCase().trim();
@@ -197,7 +214,7 @@ export function MatchForm({
         (p) =>
           p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q),
       )
-      .slice(0, 8);
+      .slice(0, INITIAL_PLAYER_RESULTS);
   }, [teamAPlayers, searchA]);
 
   const matchingB = useMemo(() => {
@@ -208,7 +225,7 @@ export function MatchForm({
         (p) =>
           p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q),
       )
-      .slice(0, 8);
+      .slice(0, INITIAL_PLAYER_RESULTS);
   }, [teamBPlayers, searchB]);
 
   // Handle Team A change with graceful revalidation
@@ -252,6 +269,23 @@ export function MatchForm({
   // Add participant to match
   const addParticipant = useCallback(
     (id: string) => {
+      const player = players.find((item) => item.id === id);
+      if (!player) return;
+      const teamPlayerCount = selected.reduce(
+        (count, selectedId) =>
+          count +
+          (players.find((item) => item.id === selectedId)?.teamName ===
+          player.teamName
+            ? 1
+            : 0),
+        0,
+      );
+      if (teamPlayerCount >= MAX_PLAYERS_PER_TEAM) {
+        toast.error(
+          `${player.teamName} already has ${MAX_PLAYERS_PER_TEAM} players selected.`,
+        );
+        return;
+      }
       setSelected((prev) => (prev.includes(id) ? prev : [...prev, id]));
       setStats((prev) => ({
         ...prev,
@@ -260,7 +294,7 @@ export function MatchForm({
       setError(null);
       if (!pending) setSubmissionKey(null);
     },
-    [pending],
+    [pending, players, selected],
   );
 
   // Remove participant from match
@@ -354,17 +388,41 @@ export function MatchForm({
       return;
     }
 
+    const excessiveWicket = performances.find((p) => p.wickets > 10);
+    if (excessiveWicket) {
+      const msg = 'A player cannot take more than 10 wickets in one match.';
+      toast.error(msg);
+      setError(msg);
+      return;
+    }
+
+    const wicketsByTeam = performances.reduce(
+      (totals, performance) => {
+        totals[performance.teamSide] += performance.wickets;
+        return totals;
+      },
+      { A: 0, B: 0 },
+    );
+    if (wicketsByTeam.A > 10 || wicketsByTeam.B > 10) {
+      const teamSide = wicketsByTeam.A > 10 ? 'A' : 'B';
+      const teamName = teamSide === 'A' ? teamA : teamB;
+      const msg = `${teamName} cannot record more than 10 wickets in this innings.`;
+      toast.error(msg);
+      setError(msg);
+      return;
+    }
+
     // Whole number and upper bounds verification
     const invalid = performances.find(
       (p) =>
         !Number.isInteger(p.runs) ||
         !Number.isInteger(p.wickets) ||
         p.runs > 10_000_000 ||
-        p.wickets > 10_000_000,
+        p.wickets > 10,
     );
     if (invalid) {
       const msg =
-        'Runs and wickets must be whole numbers from 0 to 10,000,000.';
+        'Runs must be a whole number up to 10,000,000; wickets must be a whole number from 0 to 10.';
       toast.error(msg);
       setError(msg);
       return;
@@ -405,9 +463,13 @@ export function MatchForm({
     const sideClass = isTeamA ? 'team-a' : 'team-b';
     const teamSquad = isTeamA ? teamAPlayers : teamBPlayers;
     const selectedList = isTeamA ? selectedA : selectedB;
+    const teamLimitReached = selectedList.length >= MAX_PLAYERS_PER_TEAM;
     const searchVal = isTeamA ? searchA : searchB;
     const setSearchVal = isTeamA ? setSearchA : setSearchB;
     const matches = isTeamA ? matchingA : matchingB;
+    const visiblePlayers = searchVal.trim()
+      ? matches
+      : teamSquad.slice(0, INITIAL_PLAYER_RESULTS);
     const pickerOpen = isTeamA ? pickerOpenA : pickerOpenB;
     const setPickerOpen = isTeamA ? setPickerOpenA : setPickerOpenB;
 
@@ -471,7 +533,7 @@ export function MatchForm({
             )}
           </div>
 
-          {pickerOpen && searchVal.trim() && (
+          {pickerOpen && (
             <div
               className="available-squad-container"
               id={`team-${side}-search-results`}
@@ -486,13 +548,17 @@ export function MatchForm({
                     Add players
                   </Link>
                 </p>
-              ) : matches.length > 0 ? (
+              ) : visiblePlayers.length > 0 ? (
                 <>
                   <ul
                     className="available-player-list"
-                    aria-label={`Search results for ${teamName}`}
+                    aria-label={
+                      searchVal.trim()
+                        ? `Search results for ${teamName}`
+                        : `Players in ${teamName}`
+                    }
                   >
-                    {matches.map((player) => {
+                    {visiblePlayers.map((player) => {
                       const isSelected = selected.includes(player.id);
                       return (
                         <li key={player.id} className="available-player-item">
@@ -504,6 +570,7 @@ export function MatchForm({
                           </div>
                           <button
                             type="button"
+                            onMouseDown={(event) => event.preventDefault()}
                             onClick={() => addParticipant(player.id)}
                             className={`add-participant-btn${isSelected ? ' is-added' : ''}`}
                             aria-label={
@@ -512,10 +579,12 @@ export function MatchForm({
                                 : `Add ${player.name} to match`
                             }
                             aria-pressed={isSelected}
-                            disabled={isSelected}
+                            disabled={isSelected || teamLimitReached}
                           >
                             {isSelected ? (
                               'Added'
+                            ) : teamLimitReached ? (
+                              'Team full'
                             ) : (
                               <>
                                 <Plus size={14} /> Add
@@ -526,19 +595,32 @@ export function MatchForm({
                       );
                     })}
                   </ul>
-                  {teamSquad.filter(
-                    (player) =>
-                      player.name
-                        .toLowerCase()
-                        .includes(searchVal.toLowerCase()) ||
-                      player.role
-                        .toLowerCase()
-                        .includes(searchVal.toLowerCase()),
-                  ).length > matches.length && (
+                  {teamLimitReached && (
                     <p className="picker-result-note">
-                      Refine your search to see more matches.
+                      This team already has 11 players selected for the match.
                     </p>
                   )}
+                  {searchVal.trim() &&
+                    teamSquad.filter(
+                      (player) =>
+                        player.name
+                          .toLowerCase()
+                          .includes(searchVal.toLowerCase()) ||
+                        player.role
+                          .toLowerCase()
+                          .includes(searchVal.toLowerCase()),
+                    ).length > matches.length && (
+                      <p className="picker-result-note">
+                        Refine your search to see more matches.
+                      </p>
+                    )}
+                  {!searchVal.trim() &&
+                    teamSquad.length > visiblePlayers.length && (
+                      <p className="picker-result-note">
+                        Showing the first {INITIAL_PLAYER_RESULTS} players.
+                        Search by name or role to find someone else.
+                      </p>
+                    )}
                 </>
               ) : (
                 <p className="picker-empty-note">
@@ -546,12 +628,6 @@ export function MatchForm({
                 </p>
               )}
             </div>
-          )}
-
-          {pickerOpen && !searchVal.trim() && (
-            <p className="picker-search-prompt">
-              Type a player name or role to search this squad.
-            </p>
           )}
         </div>
       </section>
@@ -822,17 +898,6 @@ export function MatchForm({
           </p>
         )}
       </fieldset>
-
-      {/* Global Error Banner if any */}
-      {error && (
-        <div
-          className="match-form-error-banner flex items-center gap-2.5 p-[12px_16px] rounded-[6px] bg-[#fff1f3] border border-[#fecdd3] text-accent text-[13px] font-semibold"
-          role="alert"
-        >
-          <AlertCircle size={18} />
-          <span>{error}</span>
-        </div>
-      )}
 
       {/* SECTION 4: Summary & Primary Action Submission Bar */}
       <div className="match-submission-bar">
