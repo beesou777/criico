@@ -42,14 +42,16 @@ export function TeamForm({ onCreated }: { onCreated?: () => void } = {}) {
 
   return (
     <form
+      autoComplete="off"
       className="team-create-form flex items-end gap-[18px] p-[2px_0_22px] border-b border-border max-sm:items-stretch max-sm:flex-col"
       onSubmit={submit}
     >
       <label className="flex-1 flex flex-col gap-[7px] text-foreground text-xs font-semibold">
         Team name
         <input
+          autoComplete="new-password"
           className="min-h-[46px] p-[12px_13px] border border-[#b9c4b2] rounded-[4px] bg-white text-ink text-sm"
-          name="name"
+          name="teamName"
           required
           minLength={2}
           maxLength={80}

@@ -101,7 +101,11 @@ export function PlayerForm({
   }
 
   return (
-    <form onSubmit={submit} className="editor-form max-w-225 py-5">
+    <form
+      autoComplete="off"
+      onSubmit={submit}
+      className="editor-form max-w-225 py-5"
+    >
       <fieldset
         className="bg-card border border-border rounded-lg p-[25px] mb-6 max-md:p-[20px_16px]"
         disabled={pending}

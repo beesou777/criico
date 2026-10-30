@@ -41,7 +41,7 @@ export function AccountSettings({
   }
 
   return (
-    <form onSubmit={save} className="grid gap-6 max-w-2xl">
+    <form autoComplete="off" onSubmit={save} className="grid gap-6 max-w-2xl">
       <section className="bg-card border border-border rounded-lg p-6">
         <div className="flex items-start gap-3 mb-6">
           <div className="grid place-items-center w-9 h-9 rounded-full bg-soft text-accent">

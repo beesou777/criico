@@ -673,7 +673,7 @@ export function MatchForm({
     </tbody>
   );
   return (
-    <form className="match-editor-form" onSubmit={submit}>
+    <form autoComplete="off" className="match-editor-form" onSubmit={submit}>
       {/* SECTION 1: Match Details & Fixture Setup */}
       <fieldset
         className="bg-card border border-border rounded-lg p-6 shadow-xs"

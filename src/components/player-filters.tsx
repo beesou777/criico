@@ -43,6 +43,7 @@ export function PlayerFilters({
 
   return (
     <form
+      autoComplete="off"
       action={pathname}
       onSubmit={submit}
       className="table-toolbar flex items-center gap-[14px] p-[18px_22px] border-b border-border max-md:p-[14px] max-md:gap-[10px] max-md:flex-wrap"

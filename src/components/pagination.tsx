@@ -23,12 +23,16 @@ export function Pagination({ meta }: { meta: PaginationMeta }) {
       className="pagination flex items-center gap-[18px] flex-wrap p-[18px_22px] border-t border-border text-[11px] max-md:p-[16px_14px] max-md:gap-[14px]"
       aria-busy={pending}
     >
-      <p className="pagination-summary text-secondary tabular-nums" aria-live="polite">
+      <p
+        className="pagination-summary text-secondary tabular-nums"
+        aria-live="polite"
+      >
         {first}–{last} of {meta.totalItems} results
       </p>
       <label className="page-size flex flex-row items-center gap-[9px] ml-auto text-[10px] text-secondary">
         Rows per page
         <select
+          autoComplete="off"
           className="w-auto min-h-[36px] p-[6px_28px_6px_10px] text-[11px] rounded-[4px] border border-[#b9c4b2] bg-white text-ink"
           aria-label="Rows per page"
           value={meta.limit}

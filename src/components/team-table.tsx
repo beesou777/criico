@@ -28,14 +28,15 @@ export function TeamTable({ teams }: { teams: TeamRecord[] }) {
   return (
     <>
       <div className="table-toolbar mt-5 flex flex-wrap items-center gap-[14px] border-b border-border pb-[18px] max-md:gap-[10px]">
-        <label className="flex min-h-[42px] min-w-[220px] max-w-[330px] flex-1 items-center gap-2 rounded-[4px] border border-[#b9c4b2] bg-white pl-3 max-md:max-w-none">
+        <label className="flex min-h-[42px] min-w-[220px] max-w-[330px] flex-1 flex-row items-center gap-2 rounded-[4px] border border-[#b9c4b2] bg-white pl-3 max-md:max-w-none">
           <Search size={18} className="shrink-0 text-secondary" />
           <span className="sr-only">Search teams</span>
           <input
+            autoComplete="off"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Find a team..."
-            className="min-h-[40px] w-full border-0 bg-transparent pl-0 text-xs text-ink outline-none"
+            className="min-h-[40px] w-full border-0 bg-transparent pl-0 text-xs font-normal text-ink outline-none"
           />
         </label>
         <label>

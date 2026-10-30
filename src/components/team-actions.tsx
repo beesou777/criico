@@ -132,6 +132,7 @@ export function TeamActions({
               <label className="mt-5 block text-xs font-semibold text-foreground">
                 Team name
                 <input
+                  autoComplete="off"
                   autoFocus
                   value={name}
                   onChange={(event) => setName(event.target.value)}

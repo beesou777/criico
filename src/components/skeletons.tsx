@@ -196,3 +196,103 @@ export function FormSkeleton() {
     </div>
   );
 }
+
+export function SettingsSkeleton() {
+  return (
+    <div role="status" aria-label="Loading settings" aria-busy="true">
+      <div className="page-heading mb-8">
+        <Skeleton className="h-10 w-[390px] max-w-full" />
+        <Skeleton className="mt-3 h-3 w-[560px] max-w-full" />
+      </div>
+      <div className="grid max-w-2xl gap-6">
+        {Array.from({ length: 2 }, (_, section) => (
+          <section
+            className="rounded-lg border border-border bg-card p-6"
+            key={section}
+          >
+            <div className="mb-6 flex items-start gap-3">
+              <Skeleton className="h-9 w-9 rounded-full" />
+              <div className="flex-1">
+                <Skeleton className="h-4 w-44" />
+                <Skeleton className="mt-2 h-3 w-72 max-w-full" />
+              </div>
+            </div>
+            {section === 0 ? (
+              <>
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="mt-2 h-11 w-full" />
+                <Skeleton className="mt-2 h-3 w-48" />
+              </>
+            ) : (
+              <div className="grid gap-4">
+                <div>
+                  <Skeleton className="h-3 w-32" />
+                  <Skeleton className="mt-2 h-11 w-full" />
+                </div>
+                <div>
+                  <Skeleton className="h-3 w-28" />
+                  <Skeleton className="mt-2 h-11 w-full" />
+                </div>
+              </div>
+            )}
+          </section>
+        ))}
+        <Skeleton className="h-11 w-36" />
+      </div>
+    </div>
+  );
+}
+
+export function MatchFormSkeleton() {
+  return (
+    <div role="status" aria-label="Loading match form" aria-busy="true">
+      <div className="page-heading mb-8">
+        <Skeleton className="h-10 w-[440px] max-w-full" />
+        <Skeleton className="mt-3 h-3 w-[430px] max-w-full" />
+      </div>
+      <div className="match-editor-form flex max-w-[960px] flex-col gap-6">
+        <section className="rounded-lg border border-border bg-card p-6 max-md:p-4">
+          <Skeleton className="h-5 w-32" />
+          <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-end gap-5 max-md:grid-cols-1">
+            <div>
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="mt-2 h-11 w-full" />
+            </div>
+            <Skeleton className="h-9 w-9 rounded-full" />
+            <div>
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="mt-2 h-11 w-full" />
+            </div>
+          </div>
+          <Skeleton className="mt-5 h-11 w-full" />
+          <div className="mt-5 grid grid-cols-2 gap-5 max-md:grid-cols-1">
+            <div>
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="mt-2 h-11 w-full" />
+            </div>
+            <div>
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="mt-2 h-11 w-full" />
+            </div>
+          </div>
+        </section>
+        <section className="rounded-lg border border-border bg-card p-6 max-md:p-4">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="mt-3 h-3 w-80 max-w-full" />
+          <div className="mt-5 grid grid-cols-2 gap-4 max-md:grid-cols-1">
+            <Skeleton className="h-28 w-full" />
+            <Skeleton className="h-28 w-full" />
+          </div>
+        </section>
+        <section className="rounded-lg border border-border bg-card p-6 max-md:p-4">
+          <Skeleton className="h-5 w-56" />
+          <div className="mt-5 space-y-3">
+            {Array.from({ length: 4 }, (_, row) => (
+              <Skeleton className="h-12 w-full" key={row} />
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}

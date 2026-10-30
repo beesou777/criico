@@ -1,1 +1,1 @@
-export { FormSkeleton as default } from '@/components/skeletons';
+export { MatchFormSkeleton as default } from '@/components/skeletons';

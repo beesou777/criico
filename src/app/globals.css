@@ -344,7 +344,7 @@
     flex-direction: column;
     gap: 24px;
     max-width: 960px;
-    margin: 0 auto;
+    margin: 0;
   }
   .match-details-fieldset,
   .match-participants-fieldset,
@@ -911,9 +911,9 @@
     min-width: 130px;
   }
   .score-value {
-    font-weight: 800;
-    font-size: 21px;
-    color: var(--green);
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ink);
     letter-spacing: -0.025em;
     font-variant-numeric: tabular-nums;
   }
@@ -937,7 +937,7 @@
   .score-popover {
     position: fixed;
     inset: 50% auto auto 50%;
-    width: min(640px, calc(100vw - 32px));
+    width: min(600px, calc(100vw - 32px));
     max-height: min(88vh, 720px);
     margin: 0;
     padding: 28px;
@@ -982,8 +982,9 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 36px;
+    row-gap: 4px;
     margin: 22px 0 26px;
-    border-top: 1px solid var(--line);
+    padding: 4px 0 18px;
     border-bottom: 1px solid var(--line);
   }
   .player-profile-details > div {
@@ -992,11 +993,7 @@
     align-items: baseline;
     gap: 5px;
     min-width: 0;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .player-profile-details > div:nth-last-child(-n + 2) {
-    border-bottom: 0;
+    padding: 8px 0;
   }
   .player-profile-details dt {
     color: var(--muted);

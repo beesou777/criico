@@ -56,6 +56,7 @@ export function AuthForm({
         </p>
       )}
       <form
+        autoComplete="off"
         action={isRegister ? action : undefined}
         onSubmit={isRegister ? undefined : login}
         className="form-stack grid gap-5"
@@ -144,7 +145,10 @@ export function AuthForm({
       </form>
       <p className="auth-switch text-center text-xs mt-[25px] m-0 text-secondary">
         {isRegister ? 'Already have an account?' : 'New to the clubhouse?'}{' '}
-        <Link className="text-primary font-bold underline hover:text-accent" href={isRegister ? '/login' : '/register'}>
+        <Link
+          className="text-primary font-bold underline hover:text-accent"
+          href={isRegister ? '/login' : '/register'}
+        >
           {isRegister ? 'Sign in' : 'Start your squad'}
         </Link>
       </p>
