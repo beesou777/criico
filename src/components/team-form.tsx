@@ -6,7 +6,7 @@ import { Check, LoaderCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { submitJSON } from '@/lib/client-api';
 
-export function TeamForm() {
+export function TeamForm({ onCreated }: { onCreated?: () => void } = {}) {
   const [pending, setPending] = useState(false);
   const [name, setName] = useState('');
   const submitting = useRef(false);
@@ -28,6 +28,7 @@ export function TeamForm() {
       });
       toast.success('Team created.');
       setName('');
+      onCreated?.();
       router.refresh();
     } catch (error) {
       toast.error(

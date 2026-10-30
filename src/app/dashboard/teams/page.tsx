@@ -1,7 +1,7 @@
 import { authenticatedTeams } from '@/lib/backend';
 import { PageHeading } from '@/components/page-heading';
-import { TeamForm } from '@/components/team-form';
 import { TeamTable } from '@/components/team-table';
+import { TeamCreateDialog } from '@/components/team-create-dialog';
 
 export const metadata = { title: 'Teams' };
 
@@ -15,6 +15,7 @@ export default async function TeamsPage() {
         <PageHeading
           title="Your teams."
           description="Create the clubs you manage, then assign every player to the right side."
+          action={<TeamCreateDialog />}
         />
         <p
           className="teams-count inline-flex items-center w-fit m-[0_0_22px] p-[4px_9px] rounded-[3px] bg-[#f1e8e5] text-secondary text-[10px] font-semibold tabular-nums"
@@ -25,7 +26,6 @@ export default async function TeamsPage() {
         </p>
       </div>
       <section className="team-panel section-panel bg-card border border-border rounded-lg overflow-visible p-[20px_22px_22px] max-sm:p-4">
-        <TeamForm />
         <p className="mt-4 text-xs leading-relaxed text-secondary">
           Disbanding is reversible and preserves players and match history. The
           team remains available in this table so it can be restored later.
